@@ -2,6 +2,8 @@
 
 # data format
 
+## block format
+
 mddf data is arranged into a tree of blocks.
 Each block is BLOCKSIZE long.
 
@@ -20,6 +22,7 @@ dataX: [ DATA, length, next block, next offset ]
 data2: [ DATA, length, next block, next offset ]
 data1: [ DATA, length, next block, next offset ]
 data0: [ DATA, length, next block, next offset ]
+[ datalen ]
 ```
 
 Point data starts at the beginning of the block:
@@ -41,4 +44,17 @@ placing data near points for performance gains.
 * data next offset - (uint32) offset of the next data block in the next block,
 counting from the end of the block as 0
 * DATA - the raw bytes to store on this block
+* datalen - (uint32) number of data records in this block
+
+## tree structure
+
+The blocks are organized into a KD-B tree with allowances for variable-size
+chunks of data to live alongside points. 
+
+When a block is too full, the next block index is chosen by comparing the point
+to insert with the first point in the current block at the dimension
+`(depth modulo dim)` for the current depth in the tree (starting from zero)
+`depth` and the dimension of every point, `dim`.
+If less than, select the left child at `(index * 2) + 1`. If greater or equal,
+select the right child at `(index + 1) * 2`.
 
