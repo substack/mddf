@@ -76,10 +76,13 @@ MDDF.prototype._put = function (buf, value) {
     var datalen = buf.readUInt32BE(buf.length - 4);
     var offset = buf.length - 4;
     for (var i = 0; i < datalen; i++) {
+        var len = buf.readUInt32BE(offset);
         offset -= len + 4;
     }
-    value.copy(buf, offset - value.length, 0, value.length);
-    return offset;
+    buf.writeUInt32BE(value.length, offset - 4);
+    value.copy(buf, offset - value.length - 4, 0, value.length);
+    buf.writeUInt32BE(datalen + 1, buf.length - 4);
+    return offset - 4;
 };
 
 MDDF.prototype._available = function (buf) {
@@ -151,10 +154,19 @@ MDDF.prototype.nn = function (pt, cb) {
     var self = this;
     var nearest = null;
     var ndist = null;
+    var ndata = null;
+    var noffset = null;
+    var nbuf = null;
     
     (function next (index, depth) {
         if (index * self.blksize >= self.size) {
-            return cb(null, nearest);
+            var len = nbuf.readUInt32BE(nbuf.length - noffset);
+console.log('len=', len); 
+            var ndata = nbuf.slice(
+                nbuf.length - noffset - len,
+                nbuf.length - noffset
+            );
+            return cb(null, nearest, ndata);
         }
         self._readBlock(index, function (err, buf) {
             if (err) return cb(err);
@@ -164,10 +176,13 @@ MDDF.prototype.nn = function (pt, cb) {
                 for (var j = 0; j < self.dim; j++) {
                     ppt.push(buf.readFloatBE(4+i*(self.dim*4+4)+j*4));
                 }
+                var offset = buf.readUInt32BE(4+i*(self.dim*4+4)+j*4);
                 var d = dist(pt, ppt);
                 if (nearest === null || d < ndist) {
                     nearest = ppt;
                     ndist = d;
+                    noffset = offset;
+                    nbuf = buf;
                 }
             }
             

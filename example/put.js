@@ -12,11 +12,8 @@ var df = mddf({
     write: fs.write.bind(null, fd)
 });
 
-for (var i = 0; i < 1000; i++) {
-    var x = (2*Math.random()-1) * 100;
-    var y = (2*Math.random()-1) * 100;
-    var z = (2*Math.random()-1) * 100;
-    var buf = Buffer(Math.random() * 20);
-    buf.fill(i.toString(16));
-    df.add([x,y,z], buf);
-}
+var x = process.argv[2];
+var y = process.argv[3];
+var z = process.argv[4];
+var buf = Buffer(process.argv[5]);
+df.add([x,y,z],buf);

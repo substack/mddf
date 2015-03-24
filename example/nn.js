@@ -10,6 +10,7 @@ var df = mddf({
     size: stat.size,
     read: fs.read.bind(null, fd)
 });
-df.nn(process.argv.slice(2), function (err, pt) {
+df.nn(process.argv.slice(2), function (err, pt, data) {
     console.log('nearest:', pt);
+    console.log('data:', data);
 });
