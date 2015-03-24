@@ -1,14 +1,10 @@
 var fs = require('fs');
 var Buffer = require('buffer').Buffer;
-var inherits = require('inherits');
-var Writable = require('stream').Writable;
 
 module.exports = MDDF;
-inherits(MDDF, Writable);
 
 function MDDF (opts) {
     if (!(this instanceof MDDF)) return new MDDF(opts);
-    Writable.call(this, { objectMode: true });
     
     this._reader = opts.read;
     this._writer = opts.write;
@@ -17,12 +13,25 @@ function MDDF (opts) {
     this.dim = opts.dim;
     this.B = Math.floor((this.blksize - 4) / (this.dim * 4 + 4));
     this.size = opts.size || 0;
+    this.queue = [];
 }
 
-MDDF.prototype._write = function (row, enc, cb) {
+MDDF.prototype.add = function (pt, value, cb) {
     var self = this;
-    var pt = row.key;
-    var value = row.value;
+    this.queue.push([ pt, value, cb ]);
+    if (this.queue.length !== 1) return;
+    (function next () {
+        var q = self.queue[0];
+        self._add(q[0], q[1], function (err) {
+            if (cb) cb(err);
+            self.queue.shift();
+            if (self.queue.length > 0) next();
+        });
+    })();
+};
+    
+MDDF.prototype._add = function (pt, value, cb) {
+    var self = this;
     if (!self._writer) {
         return cb(new Error('cannot add points: no write function defined'));
     }

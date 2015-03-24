@@ -16,5 +16,5 @@ for (var i = 0; i < 1000 * 20; i++) {
     var x = (2*Math.random()-1) * 100;
     var y = (2*Math.random()-1) * 100;
     var z = (2*Math.random()-1) * 100;
-    df.write({ key: [x,y,z], value: i });
+    df.add([x,y,z], i);
 }
