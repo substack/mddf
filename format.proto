@@ -1,14 +1,8 @@
 message Block {
     repeated Point points = 1;
-    string data = 2;
 }
 
 message Point {
     repeated float coordinates = 1;
-    repeated Index indexes = 2;
-}
-
-message Index {
-    uint32 offset = 1;
-    sint32 block = 2;
+    repeated uint32 index = 2;
 }
