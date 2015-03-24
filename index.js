@@ -42,15 +42,17 @@ MDDF.prototype._add = function (pt, value, cb) {
     (function next (index, depth) {
         self._readBlock(index, function (err, buf) {
             if (err) return cb(err);
-            var len = buf.readUInt32BE(0);
+            var free = self._available(buf);
             
-            if (len < self.B) {
+            if (free >= self.dim * 4 + 4 + value.length + 4) {
                 // not full, add point
-                buf.writeUInt32BE(len + 1, 0);
+                var ptlen = buf.readUInt32BE(0);
+                buf.writeUInt32BE(ptlen + 1, 0);
+                var offset = 4 + ptlen * (self.dim * 4 + 4);
                 for (var i = 0; i < pt.length; i++) {
-                    buf.writeFloatBE(pt[i], 4 + len*(self.dim*4+4) + i*4);
+                    buf.writeFloatBE(pt[i], offset + i*4);
                 }
-                buf.writeUInt32BE(value, 4 + len*(self.dim * 4 + 4) + i*4);
+                buf.writeUInt32BE(value, offset + i*4);
                 return self._writeBlock(index, buf, cb);
             }
             
@@ -67,13 +69,28 @@ MDDF.prototype._add = function (pt, value, cb) {
     })(0, 0);
 };
 
+MDDF.prototype._available = function (buf) {
+    var ptlen = buf.readUInt32BE(0);
+    var datalen = buf.readUInt32BE(buf.length - 4);
+    
+    var free = buf.length - ptlen * (this.dim * 4 + 4) - 4;
+    var offset = buf.length - 4;
+    for (var i = 0; i < datalen; i++) {
+        var len = buf.readUInt32BE(offset);
+        offset -= len + 4;
+        free -= len + 4;
+    }
+    return free;
+};
+
 MDDF.prototype._readBlock = function (n, cb) {
     var self = this;
     var offset = n * this.blksize;
     if (offset >= this.size) {
         this.size = (n + 1) * this.blksize;
         var buf = Buffer(this.blksize);
-        buf.writeUInt32BE(0, 0);
+        buf.writeUInt32BE(0, 0); // ptlen
+        buf.writeUInt32BE(0, buf.length-4); // datalen
         return cb(null, buf);
     }
     var buf = Buffer(this.blksize);

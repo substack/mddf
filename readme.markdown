@@ -17,11 +17,11 @@ ptM: [ coord0, coord1... coordN ] [ offsetM ]
 
 [... unallocated space ...]
 
-dataX: [ DATA, length, next block, next offset ]
+dataX: [ DATA, length ]
 ...
-data2: [ DATA, length, next block, next offset ]
-data1: [ DATA, length, next block, next offset ]
-data0: [ DATA, length, next block, next offset ]
+data2: [ DATA, length ]
+data1: [ DATA, length ]
+data0: [ DATA, length ]
 [ datalen ]
 ```
 
@@ -40,9 +40,6 @@ be referenced by completely different blocks. Implementations may prioritize
 placing data near points for performance gains.
 
 * data length - (uint32) amount of data in this block
-* data next block - (uint32) location of the next block of data or 0 if none
-* data next offset - (uint32) offset of the next data block in the next block,
-counting from the end of the block as 0
 * DATA - the raw bytes to store on this block
 * datalen - (uint32) number of data records in this block
 

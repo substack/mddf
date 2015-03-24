@@ -12,9 +12,10 @@ var df = mddf({
     write: fs.write.bind(null, fd)
 });
 
-for (var i = 0; i < 1000 * 20; i++) {
+for (var i = 0; i < 1000; i++) {
     var x = (2*Math.random()-1) * 100;
     var y = (2*Math.random()-1) * 100;
     var z = (2*Math.random()-1) * 100;
-    df.add([x,y,z], i);
+    var buf = Buffer(Math.random() * 20);
+    df.add([x,y,z], buf);
 }
