@@ -12,11 +12,19 @@ var df = mddf({
     write: fs.write.bind(null, fd)
 });
 
-for (var i = 0; i < 1000; i++) {
+var size = 1000 * 20;
+var pending = size;
+for (var i = 0; i < size; i++) {
     var x = (2*Math.random()-1) * 100;
     var y = (2*Math.random()-1) * 100;
     var z = (2*Math.random()-1) * 100;
     var buf = Buffer(Math.random() * 20);
     buf.fill(i.toString(16));
-    df.put([x,y,z], buf);
+    df.put([x,y,z], buf, done);
+}
+
+function done () {
+    if (--pending === 0) {
+        fs.truncate(df.size, function () { fs.close(fd) });
+    }
 }
