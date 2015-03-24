@@ -131,8 +131,8 @@ MDDF.prototype.nn = function (pt, cb) {
         if (index * self.blksize >= self.size) {
             var len = nbuf.readUInt32BE(nbuf.length - noffset - 4);
             var ndata = nbuf.slice(
-                nbuf.length - noffset - len - 8,
-                nbuf.length - noffset - 8
+                nbuf.length - noffset - len - 4,
+                nbuf.length - noffset - 4
             );
             return cb(null, nearest, ndata);
         }
