@@ -16,13 +16,13 @@ function MDDF (opts) {
     this.queue = [];
 }
 
-MDDF.prototype.add = function (pt, value, cb) {
+MDDF.prototype.put = function (pt, value, cb) {
     var self = this;
     this.queue.push([ pt, value, cb ]);
     if (this.queue.length !== 1) return;
     (function next () {
         var q = self.queue[0];
-        self._add(q[0], q[1], function (err) {
+        self._put(q[0], q[1], function (err) {
             if (cb) cb(err);
             self.queue.shift();
             if (self.queue.length > 0) next();
@@ -30,10 +30,10 @@ MDDF.prototype.add = function (pt, value, cb) {
     })();
 };
     
-MDDF.prototype._add = function (pt, value, cb) {
+MDDF.prototype._put = function (pt, value, cb) {
     var self = this;
     if (!self._writer) {
-        return cb(new Error('cannot add points: no write function defined'));
+        return cb(new Error('cannot put points: no write function defined'));
     }
     if (self.dim !== pt.length) {
         return cb(new Error('inconsistent dimension'));
@@ -53,7 +53,7 @@ MDDF.prototype._add = function (pt, value, cb) {
                 for (var i = 0; i < pt.length; i++) {
                     buf.writeFloatBE(pt[i], offset + i*4);
                 }
-                var dataix = self._put(buf, value);
+                var dataix = self._putData(buf, value);
                 buf.writeUInt32BE(dataix, offset + i*4);
                 
                 return self._writeBlock(index, buf, cb);
@@ -72,7 +72,7 @@ MDDF.prototype._add = function (pt, value, cb) {
     })(0, 0);
 };
 
-MDDF.prototype._put = function (buf, value) {
+MDDF.prototype._putData = function (buf, value) {
     var datalen = buf.readUInt32BE(buf.length - 4);
     var offset = buf.length - 4;
     for (var i = 0; i < datalen; i++) {

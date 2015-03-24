@@ -16,4 +16,4 @@ var x = process.argv[2];
 var y = process.argv[3];
 var z = process.argv[4];
 var buf = Buffer(process.argv[5]);
-df.add([x,y,z],buf);
+df.put([x,y,z],buf);

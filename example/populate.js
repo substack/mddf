@@ -18,5 +18,5 @@ for (var i = 0; i < 1000; i++) {
     var z = (2*Math.random()-1) * 100;
     var buf = Buffer(Math.random() * 20);
     buf.fill(i.toString(16));
-    df.add([x,y,z], buf);
+    df.put([x,y,z], buf);
 }
