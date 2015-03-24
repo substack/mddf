@@ -158,7 +158,7 @@ the end of the block
 
 Data records start at the end of the block and grow toward the beginning.
 
-Data records to not neceesarily correspond to points of the same index and may
+Data records do not neceesarily correspond to points of the same index and may
 be referenced by completely different blocks. Implementations may prioritize
 placing data near points for performance gains.
 
