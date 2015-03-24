@@ -12,9 +12,9 @@ var df = mddf({
     write: fs.write.bind(null, fd)
 });
 
-df.write({ key: [1,2,3], value: 1 });
-df.write({ key: [4,5,6], value: 2 });
-df.write({ key: [0,-2.5,3], value: 3 });
-df.write({ key: [-2,3,0], value: 4 });
-df.write({ key: [3,2,1], value: 5 });
-df.end();
+for (var i = 0; i < 1000 * 20; i++) {
+    var x = (2*Math.random()-1) * 100;
+    var y = (2*Math.random()-1) * 100;
+    var z = (2*Math.random()-1) * 100;
+    df.write({ key: [x,y,z], value: i });
+}

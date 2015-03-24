@@ -81,6 +81,33 @@ MDDF.prototype.knn = function (pt, k, maxDistance, cb) {
     // k closest points
 };
 
+MDDF.prototype._exaustive = function (pt, cb) {
+    var self = this;
+    var nearest = null;
+    var ndist = null;
+    
+    var pending = 0;
+    for (var k = 0; k < self.size / self.blksize; k ++) {
+        pending ++;
+        self._readBlock(k, function (err, buf) {
+            if (err) return cb(err);
+            var len = buf.readUInt32BE(0);
+            for (var i = 0; i < len; i++) {
+                var ppt = [];
+                for (var j = 0; j < self.dim; j++) {
+                    ppt.push(buf.readFloatBE(4+i*(self.dim*4+4)+j*4));
+                }
+                var d = dist(pt, ppt);
+                if (nearest === null || d < ndist) {
+                    nearest = ppt;
+                    ndist = d;
+                }
+            }
+            if (-- pending === 0) return cb(null, nearest);
+        });
+    }
+};
+
 MDDF.prototype.nn = function (pt, cb) {
     var self = this;
     var nearest = null;
@@ -93,11 +120,9 @@ MDDF.prototype.nn = function (pt, cb) {
         self._readBlock(index, function (err, buf) {
             if (err) return cb(err);
             var len = buf.readUInt32BE(0);
-console.log('len=', len); 
             for (var i = 0; i < len; i++) {
                 var ppt = [];
                 for (var j = 0; j < self.dim; j++) {
-console.log(4+i*(self.dim*4+4)+j*4, buf.readFloatBE(4+i*(self.dim*4+4)+j*4));
                     ppt.push(buf.readFloatBE(4+i*(self.dim*4+4)+j*4));
                 }
                 var d = dist(pt, ppt);
