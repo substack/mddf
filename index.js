@@ -47,12 +47,15 @@ MDDF.prototype._add = function (pt, value, cb) {
             if (free >= self.dim * 4 + 4 + value.length + 4) {
                 // not full, add point
                 var ptlen = buf.readUInt32BE(0);
+                
                 buf.writeUInt32BE(ptlen + 1, 0);
                 var offset = 4 + ptlen * (self.dim * 4 + 4);
                 for (var i = 0; i < pt.length; i++) {
                     buf.writeFloatBE(pt[i], offset + i*4);
                 }
-                buf.writeUInt32BE(value, offset + i*4);
+                var dataix = self._put(buf, value);
+                buf.writeUInt32BE(dataix, offset + i*4);
+                
                 return self._writeBlock(index, buf, cb);
             }
             
@@ -67,6 +70,16 @@ MDDF.prototype._add = function (pt, value, cb) {
             }
         });
     })(0, 0);
+};
+
+MDDF.prototype._put = function (buf, value) {
+    var datalen = buf.readUInt32BE(buf.length - 4);
+    var offset = buf.length - 4;
+    for (var i = 0; i < datalen; i++) {
+        offset -= len + 4;
+    }
+    value.copy(buf, offset - value.length, 0, value.length);
+    return offset;
 };
 
 MDDF.prototype._available = function (buf) {
