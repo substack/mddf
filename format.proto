@@ -1,8 +1,0 @@
-message Block {
-    repeated Point points = 1;
-}
-
-message Point {
-    repeated float coordinates = 1;
-    repeated uint32 index = 2;
-}

@@ -35,11 +35,11 @@ MDDF.prototype.add = function (pt, dataix, cb) {
             
             if (len < self.B) {
                 // not full, add point
-                buf.writeUInt32BE(0, len + 1);
+                buf.writeUInt32BE(len + 1, 0);
                 for (var i = 0; i < pt.length; i++) {
-                    buf.writeFloatBE(4 + i * (self.dim * 4 + 4), pt[i]);
+                    buf.writeFloatBE(pt[i], 4 + i * (self.dim * 4 + 4));
                 }
-                buf.writeUInt32BE(4 + i * (self.dim * 4 + 4), dataix);
+                buf.writeUInt32BE(dataix, 4 + i * (self.dim * 4 + 4));
                 return self._writeBlock(index, buf, cb);
             }
             
@@ -66,9 +66,8 @@ MDDF.prototype._readBlock = function (n, cb) {
         return cb(null, buf);
     }
     var buf = Buffer(this.blksize);
-    this._read(buf, offset, this.blksize, 0, null, function (err, buf) {
-        if (err) return cb(err);
-        else cb(err);
+    this._read(buf, 0, this.blksize, offset, function (err) {
+        cb(err, buf);
     });
 };
 
@@ -80,9 +79,50 @@ MDDF.prototype.knn = function (pt, k, maxDistance, cb) {
     // k closest points
 };
 
-MDDF.prototype.nn = function (pt, maxDistance, cb) {
-    // closest point to `point`
+MDDF.prototype.nn = function (pt, cb) {
+    var self = this;
+    var nearest = null;
+    var ndist = null;
+    
+    (function next (index, depth) {
+        if (index * self.blksize >= self.size) {
+            return cb(null, nearest);
+        }
+        self._readBlock(index, function (err, buf) {
+            if (err) return cb(err);
+            var len = buf.readUInt32BE(0);
+            for (var i = 0; i < len; i++) {
+                var ppt = [];
+                for (var j = 0; j < self.dim; j++) {
+                    ppt.push(buf.readFloatBE(4+i*(self.dim*4+4)+j*4));
+                }
+                var d = dist(pt, ppt);
+                if (nearest === null || d < ndist) {
+                    nearest = ppt;
+                    ndist = d;
+                }
+            }
+            
+            var ix = depth % self.dim;
+            var pivot = buf.readFloatBE(4 + ix * (self.dim * 4 + 4));
+            
+            if (pt[ix] < pivot) {
+                next(index * 2 + 1, depth + 1);
+            }
+            else {
+                next((index + 1) * 2, depth + 1);
+            }
+        });
+    })(0, 0);
 };
 
 MDDF.prototype.rnn = function (pt, radius, visit) {
 };
+
+function dist (a, b) {
+    var sum = 0;
+    for (var i = 0; i < a.length; i++) {
+        sum += (a[i]-b[i])*(a[i]-b[i]);
+    }
+    return Math.sqrt(sum);
+}
