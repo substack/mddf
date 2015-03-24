@@ -12,8 +12,9 @@ var df = mddf({
     write: fs.write.bind(null, fd)
 });
 
-df.add([1,2,3], 1);
-df.add([4,5,6], 2);
-df.add([0,-2.5,3],3);
-df.add([-2,3,0], 4);
-df.add([3,2,1], 5);
+df.write({ key: [1,2,3], value: 1 });
+df.write({ key: [4,5,6], value: 2 });
+df.write({ key: [0,-2.5,3], value: 3 });
+df.write({ key: [-2,3,0], value: 4 });
+df.write({ key: [3,2,1], value: 5 });
+df.end();

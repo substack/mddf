@@ -1,13 +1,17 @@
 var fs = require('fs');
 var Buffer = require('buffer').Buffer;
+var inherits = require('inherits');
+var Writable = require('stream').Writable;
 
 module.exports = MDDF;
+inherits(MDDF, Writable);
 
 function MDDF (opts) {
     if (!(this instanceof MDDF)) return new MDDF(opts);
-    var self = this;
-    this._read = opts.read;
-    this._write = opts.write;
+    Writable.call(this, { objectMode: true });
+    
+    this._reader = opts.read;
+    this._writer = opts.write;
     
     this.blksize = opts.blksize || 4096;
     this.dim = opts.dim;
@@ -15,14 +19,12 @@ function MDDF (opts) {
     this.size = opts.size || 0;
 }
 
-MDDF.prototype.add = function (pt, dataix, cb) {
-    if (!cb) cb = function () {};
+MDDF.prototype._write = function (row, enc, cb) {
     var self = this;
-    if (!self._write) {
+    var pt = row.key;
+    var value = row.value;
+    if (!self._writer) {
         return cb(new Error('cannot add points: no write function defined'));
-    }
-    if (typeof data === 'string') {
-        data = Buffer(data);
     }
     if (self.dim !== pt.length) {
         return cb(new Error('inconsistent dimension'));
@@ -39,7 +41,7 @@ MDDF.prototype.add = function (pt, dataix, cb) {
                 for (var i = 0; i < pt.length; i++) {
                     buf.writeFloatBE(pt[i], 4 + len*(self.dim*4+4) + i*4);
                 }
-                buf.writeUInt32BE(dataix, 4 + len*(self.dim * 4 + 4) + i*4);
+                buf.writeUInt32BE(value, 4 + len*(self.dim * 4 + 4) + i*4);
                 return self._writeBlock(index, buf, cb);
             }
             
@@ -66,13 +68,13 @@ MDDF.prototype._readBlock = function (n, cb) {
         return cb(null, buf);
     }
     var buf = Buffer(this.blksize);
-    this._read(buf, 0, this.blksize, offset, function (err) {
+    this._reader(buf, 0, this.blksize, offset, function (err) {
         cb(err, buf);
     });
 };
 
 MDDF.prototype._writeBlock = function (n, buf, cb) {
-    this._write(buf, 0, this.blksize, n * this.blksize, cb);
+    this._writer(buf, 0, this.blksize, n * this.blksize, cb);
 };
 
 MDDF.prototype.knn = function (pt, k, maxDistance, cb) {
@@ -91,9 +93,11 @@ MDDF.prototype.nn = function (pt, cb) {
         self._readBlock(index, function (err, buf) {
             if (err) return cb(err);
             var len = buf.readUInt32BE(0);
+console.log('len=', len); 
             for (var i = 0; i < len; i++) {
                 var ppt = [];
                 for (var j = 0; j < self.dim; j++) {
+console.log(4+i*(self.dim*4+4)+j*4, buf.readFloatBE(4+i*(self.dim*4+4)+j*4));
                     ppt.push(buf.readFloatBE(4+i*(self.dim*4+4)+j*4));
                 }
                 var d = dist(pt, ppt);
