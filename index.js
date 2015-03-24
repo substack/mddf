@@ -82,7 +82,7 @@ MDDF.prototype._put = function (buf, value) {
     buf.writeUInt32BE(value.length, offset - 4);
     value.copy(buf, offset - value.length - 8, 0, value.length);
     buf.writeUInt32BE(datalen + 1, buf.length - 4);
-    return offset - 4;
+    return buf.length - offset;
 };
 
 MDDF.prototype._available = function (buf) {
@@ -160,10 +160,10 @@ MDDF.prototype.nn = function (pt, cb) {
     
     (function next (index, depth) {
         if (index * self.blksize >= self.size) {
-            var len = nbuf.readUInt32BE(noffset);
+            var len = nbuf.readUInt32BE(nbuf.length - noffset - 4);
             var ndata = nbuf.slice(
-                noffset - len - 4,
-                noffset - 4
+                nbuf.length - noffset - len - 8,
+                nbuf.length - noffset - 8
             );
             return cb(null, nearest, ndata);
         }
