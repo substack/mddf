@@ -37,14 +37,14 @@ MDDF.prototype.add = function (pt, dataix, cb) {
                 // not full, add point
                 buf.writeUInt32BE(len + 1, 0);
                 for (var i = 0; i < pt.length; i++) {
-                    buf.writeFloatBE(pt[i], 4 + i * (self.dim * 4 + 4));
+                    buf.writeFloatBE(pt[i], 4 + len*(self.dim*4+4) + i*4);
                 }
-                buf.writeUInt32BE(dataix, 4 + i * (self.dim * 4 + 4));
+                buf.writeUInt32BE(dataix, 4 + len*(self.dim * 4 + 4) + i*4);
                 return self._writeBlock(index, buf, cb);
             }
             
             var ix = depth % self.dim;
-            var pivot = buf.readFloatBE(4 + ix * (self.dim * 4 + 4));
+            var pivot = buf.readFloatBE(4 + ix * 4);
             
             if (pt[ix] < pivot) {
                 next(index * 2 + 1, depth + 1);
@@ -104,7 +104,7 @@ MDDF.prototype.nn = function (pt, cb) {
             }
             
             var ix = depth % self.dim;
-            var pivot = buf.readFloatBE(4 + ix * (self.dim * 4 + 4));
+            var pivot = buf.readFloatBE(4 + ix * 4);
             
             if (pt[ix] < pivot) {
                 next(index * 2 + 1, depth + 1);
