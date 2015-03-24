@@ -76,7 +76,7 @@ MDDF.prototype._putData = function (buf, value) {
     var datalen = buf.readUInt32BE(buf.length - 4);
     var offset = buf.length - 4;
     for (var i = 0; i < datalen; i++) {
-        var len = buf.readUInt32BE(offset);
+        var len = buf.readUInt32BE(offset - 4);
         offset -= len + 4;
     }
     buf.writeUInt32BE(value.length, offset - 4);
@@ -92,7 +92,7 @@ MDDF.prototype._available = function (buf) {
     var free = buf.length - ptlen * (this.dim * 4 + 4) - 4;
     var offset = buf.length - 4;
     for (var i = 0; i < datalen; i++) {
-        var len = buf.readUInt32BE(offset);
+        var len = buf.readUInt32BE(offset - 4);
         offset -= len + 4;
         free -= len + 4;
     }
