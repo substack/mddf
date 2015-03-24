@@ -1,6 +1,124 @@
 # mddf
 
+Let's generate 100000 uniformly distributed points in 3d, each with a 100 byte
+payload:
+
+``` js
+var mddf = require('mddf');
+var fs = require('fs');
+
+var fd = fs.openSync('data.mddf', 'w+');
+var stat = fs.fstatSync(fd);
+
+var df = mddf({
+    blksize: 4096,
+    dim: 3,
+    size: stat.size,
+    read: fs.read.bind(null, fd),
+    write: fs.write.bind(null, fd)
+});
+
+var size = 100000;
+(function next () {
+    if (-- size < 0) {
+        return fs.truncate(fd, df.size, function () { fs.close(fd) });
+    }
+    var x = (2*Math.random()-1) * 100;
+    var y = (2*Math.random()-1) * 100;
+    var z = (2*Math.random()-1) * 100;
+    var buf = Buffer(100);
+    buf.fill(97 + Math.random()*26);
+    df.put([x,y,z], buf, next);
+})();
+```
+
+We put `100000 * (4*3 + 100) / 1024 / 1024` (10M) in and got a 17M file out:
+
+```
+$ ls -sh data.mddf 
+17M data.mddf
+```
+
+Now we can query for nearest neighbors:
+
+``` js
+var mddf = require('mddf');
+var fs = require('fs');
+
+var fd = fs.openSync('data.mddf', 'r');
+var stat = fs.fstatSync(fd);
+
+var df = mddf({
+    blksize: 4096,
+    dim: 3,
+    size: stat.size,
+    read: fs.read.bind(null, fd)
+});
+
+var start = Date.now();
+df.nn(process.argv.slice(2), function (err, pt, data) {
+    var elapsed = Date.now() - start;
+    console.log('nearest:', pt);
+    console.log('data: ' + data);
+    console.log('query took ' + elapsed + ' ms');
+});
+```
+
+and the nearest neighbor is:
+
+```
+$ node nn.js -50 25 100
+nearest: [ -48.222816467285156, 22.09300422668457, 95.60971069335938 ]
+data: yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy
+query took 12 ms
+```
+
+12 ms! And with no caching of `fs.read()`!
+
+# perf boost
+
+For added performance, cache the calls to `fs.read()` and buffer `fs.write()` in
+memory before writing to disk each time.
+
+# limitations
+
+If you try to save a payload that is larger than the block size, bad things will
+happen!
+
+This is very alpha quality, mad science code. caveat npmtor.
+
+# methods
+
+``` js
+var mddf = require('mddf')
+```
+
+## var df = mddf(opts)
+
+## df.put(pt, data, cb)
+
+Insert the point `pt`, an array of floating-point coordinates into the structure
+with a payload of `data`, a buffer.
+
+`cb(err)` fires when the operation completes with any errors.
+
+## df.nn(point, cb)
+
+Find the nearest neighbor to `point` as `cb(err, pt, data)`.
+
+# todo
+
+[static-kdtree](https://npmjs.com/package/static-kdtree) has these other
+methods, they are probably worth implementing here:
+
+* range
+* rnn
+* knn
+
 # data format
+
+This format is provisional and will change to support data payloads larger than
+the block size.
 
 ## block format
 
@@ -55,3 +173,14 @@ to insert with the first point in the current block at the dimension
 If less than, select the left child at `(index * 2) + 1`. If greater or equal,
 select the right child at `(index + 1) * 2`.
 
+# install
+
+With [npm](https://npmjs.org) do:
+
+```
+npm install mddf
+```
+
+# license
+
+MIT
