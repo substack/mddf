@@ -10,7 +10,11 @@ var df = mddf({
     size: stat.size,
     read: fs.read.bind(null, fd)
 });
+
+var start = Date.now();
 df.nn(process.argv.slice(2), function (err, pt, data) {
+    var elapsed = Date.now() - start;
     console.log('nearest:', pt);
-    console.log('data:', data);
+    console.log('data: ' + data);
+    console.log('query took ' + elapsed + ' ms');
 });
