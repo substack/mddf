@@ -72,7 +72,7 @@ MDDF.prototype._readBlock = function (n, cb) {
 };
 
 MDDF.prototype._writeBlock = function (n, buf, cb) {
-    this._write(buf, n * this.blksize, this.blksize, cb);
+    this._write(buf, 0, this.blksize, n * this.blksize, cb);
 };
 
 MDDF.prototype.knn = function (pt, k, maxDistance, cb) {
