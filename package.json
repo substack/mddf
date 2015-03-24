@@ -1,0 +1,30 @@
+{
+  "name": "mddf",
+  "version": "1.0.0",
+  "description": "multi-dimensional data format with attachments for proximity search using a kd-b tree",
+  "main": "index.js",
+  "dependencies": {},
+  "devDependencies": {
+    "tape": "^3.5.0"
+  },
+  "scripts": {
+    "test": "tape test/*.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://gitub.com/substack/mddf.git"
+  },
+  "keywords": [
+    "multi-dimensional",
+    "database",
+    "proximity",
+    "nearest",
+    "neighbors",
+    "kd",
+    "tree",
+    "b",
+    "tree"
+  ],
+  "author": "substack",
+  "license": "MIT"
+}

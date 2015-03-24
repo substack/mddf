@@ -1,5 +1,10 @@
 # mddf
 
+multi-dimensional data format with attachments
+for proximity search using a kd-b tree
+
+# example
+
 Let's generate 100000 uniformly distributed points in 3d, each with a 100 byte
 payload:
 
