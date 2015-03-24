@@ -80,7 +80,7 @@ MDDF.prototype._put = function (buf, value) {
         offset -= len + 4;
     }
     buf.writeUInt32BE(value.length, offset - 4);
-    value.copy(buf, offset - value.length - 4, 0, value.length);
+    value.copy(buf, offset - value.length - 8, 0, value.length);
     buf.writeUInt32BE(datalen + 1, buf.length - 4);
     return offset - 4;
 };
@@ -160,11 +160,10 @@ MDDF.prototype.nn = function (pt, cb) {
     
     (function next (index, depth) {
         if (index * self.blksize >= self.size) {
-            var len = nbuf.readUInt32BE(nbuf.length - noffset);
-console.log('len=', len); 
+            var len = nbuf.readUInt32BE(noffset);
             var ndata = nbuf.slice(
-                nbuf.length - noffset - len,
-                nbuf.length - noffset
+                noffset - len - 4,
+                noffset - 4
             );
             return cb(null, nearest, ndata);
         }
