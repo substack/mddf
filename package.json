@@ -20,10 +20,10 @@
     "proximity",
     "nearest",
     "neighbors",
-    "kd",
-    "tree",
-    "b",
-    "tree"
+    "kd tree",
+    "b tree",
+    "kdb",
+    "bkd"
   ],
   "author": "substack",
   "license": "MIT"
