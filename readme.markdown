@@ -26,7 +26,7 @@ var df = mddf({
 var size = 100000;
 (function next () {
     if (-- size < 0) {
-        return fs.truncate(fd, df.size, function () { fs.close(fd) });
+        return fs.ftruncate(fd, df.size, function () { fs.close(fd) });
     }
     var x = (2*Math.random()-1) * 100;
     var y = (2*Math.random()-1) * 100;
