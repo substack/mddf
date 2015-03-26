@@ -43,8 +43,9 @@ MDDF.prototype._put = function (pt, value, cb) {
         self._readBlock(index, function (err, buf) {
             if (err) return cb(err);
             var free = self._available(buf);
+            var needed = self.dim * 4 + 4 + value.length + 4;
             
-            if (free >= self.dim * 4 + 4 + value.length + 4) {
+            if (free >= needed) {
                 // not full, add point
                 var ptlen = buf.readUInt32BE(0);
                 
@@ -89,7 +90,7 @@ MDDF.prototype._available = function (buf) {
     var ptlen = buf.readUInt32BE(0);
     var datalen = buf.readUInt32BE(buf.length - 4);
     
-    var free = buf.length - ptlen * (this.dim * 4 + 4) - 4;
+    var free = buf.length - ptlen * (this.dim * 4 + 4) - 8;
     var offset = buf.length - 4;
     for (var i = 0; i < datalen; i++) {
         var len = buf.readUInt32BE(offset - 4);
