@@ -81,7 +81,7 @@ MDDF.prototype._putData = function (buf, value) {
         offset -= len + 4;
     }
     buf.writeUInt32BE(value.length, offset - 4);
-    value.copy(buf, offset - value.length - 8, 0, value.length);
+    value.copy(buf, offset - value.length - 4, 0, value.length);
     buf.writeUInt32BE(datalen + 1, buf.length - 4);
     return buf.length - offset;
 };

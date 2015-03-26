@@ -51,7 +51,7 @@ test('nearest neighbor', function (t) {
     t.plan(times * 3);
     
     (function next () {
-        if (--times === 0) return;
+        if (--times < 0) return;
         
         var pt = rpoint();
         var mind = Number.MAX_VALUE;
