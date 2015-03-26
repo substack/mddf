@@ -115,10 +115,10 @@ MDDF.prototype._readBlock = function (n, cb) {
     
     function onread (err, bytes) {
         if (err) cb(err);
-        else if (bytes === this.blksize) {
+        else if (bytes === self.blksize) {
             cb(null, buf);
         }
-        else if (bytes < this.blksize) {
+        else if (bytes < self.blksize) {
             self._reader(buf, bytes, self.blksize - bytes, offset, onread);
         }
         else {
