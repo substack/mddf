@@ -11,7 +11,7 @@ var data = {};
 var df;
 
 test('populate for nn', function (t) {
-    var size = 5000;
+    var size = 50;
     t.plan(size + 2);
     
     fs.open(tmpfile, 'w+', function (err, fd) {
@@ -47,10 +47,12 @@ test('populate for nn', function (t) {
 });
 
 test('nearest neighbor', function (t) {
-    var times = 1;
+    var times = 100;
     t.plan(times * 3);
     
     (function next () {
+        if (--times === 0) return;
+        
         var pt = rpoint();
         var mind = Number.MAX_VALUE;
         var minp = null;
@@ -66,6 +68,7 @@ test('nearest neighbor', function (t) {
             t.ifError(err);
             t.deepEqual(p, minp, 'point');
             t.deepEqual(buf, data[minp.join(',')], 'data');
+            next();
         });
     })();
 });
@@ -79,8 +82,9 @@ function dist (a, b) {
 }
 
 function rpoint () {
-    var x = (2*Math.random()-1) * 100;
-    var y = (2*Math.random()-1) * 100;
-    var z = (2*Math.random()-1) * 100;
-    return [ x, y, z ];
+    var xs = new Float32Array(3);
+    xs[0] = (2*Math.random()-1) * 100;
+    xs[1] = (2*Math.random()-1) * 100;
+    xs[2] = (2*Math.random()-1) * 100;
+    return [].slice.call(xs);
 }
