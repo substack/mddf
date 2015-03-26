@@ -111,9 +111,20 @@ MDDF.prototype._readBlock = function (n, cb) {
         return cb(null, buf);
     }
     var buf = Buffer(this.blksize);
-    this._reader(buf, 0, this.blksize, offset, function (err) {
-        cb(err, buf);
-    });
+    this._reader(buf, 0, this.blksize, offset, onread);
+    
+    function onread (err, bytes) {
+        if (err) cb(err);
+        else if (bytes === this.blksize) {
+            cb(null, buf);
+        }
+        else if (bytes < this.blksize) {
+            self._reader(buf, bytes, self.blksize - bytes, offset, onread);
+        }
+        else {
+            cb(null, buf.slice(0, bytes));
+        }
+    }
 };
 
 MDDF.prototype._writeBlock = function (n, buf, cb) {
