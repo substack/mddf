@@ -44,6 +44,9 @@ MDDF.prototype._put = function (pt, value, cb) {
             if (err) return cb(err);
             var free = self._available(buf);
             var needed = self.dim * 4 + 4 + value.length + 4;
+            if (needed > self.blksize) {
+                return cb(new Error('block too large'));
+            }
             
             if (free >= needed) {
                 // not full, add point
@@ -115,6 +118,9 @@ MDDF.prototype._readBlock = function (n, cb) {
     
     function onread (err, bytes) {
         if (err) cb(err);
+        else if (bytes === 0) {
+            cb(new Error('0 bytes read'));
+        }
         else if (bytes === self.blksize) {
             cb(null, buf);
         }
