@@ -3,7 +3,31 @@
 multi-dimensional data format with attachments
 for proximity search using a kd-b tree
 
-# example
+# command example
+
+store data at some points:
+
+```
+$ echo cool | mddf -d 3 -f /tmp/wow.mddf put 1 2 3
+$ echo beans | mddf -d 3 -f /tmp/wow.mddf put 5 -10 8
+$ echo wow | mddf -d 3 -f /tmp/wow.mddf put -20 5 -30
+```
+
+search for the nearest neighbor:
+
+```
+$ mddf -d 3 -f /tmp/wow.mddf nn -5 3 -15
+-20 5 -30
+```
+
+fetch data at a point:
+
+```
+$ mddf -d 3 -f /tmp/wow.mddf data -20 5 -30
+wow
+```
+
+# api example
 
 Let's generate 100000 uniformly distributed points in 3d, each with a 100 byte
 payload:
@@ -110,6 +134,27 @@ with a payload of `data`, a buffer.
 ## df.nn(point, cb)
 
 Find the nearest neighbor to `point` as `cb(err, pt, data)`.
+
+# usage
+
+```
+mddf {-f FILE} nn X Y Z ...
+
+  Search for and print the nearest point to [X Y Z...].
+
+mddf {-f FILE} data X Y Z ...
+
+  Write the data at [X Y Z...] to stdout.
+
+mddf {-f FILE} put X Y Z ...  
+
+  Put data from stdin into the point at [X Y Z...].
+
+mddf help 
+
+  Show this message.
+
+```
 
 # todo
 

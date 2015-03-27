@@ -36,18 +36,17 @@ var df = mddf({
 });
 
 if (cmd == 'nn') {
-    var xyz = argv._.slice(1);
+    var xyz = getxyz('nn');
     df.nn(xyz, function (err, pt, data) {
         if (err) return error(err);
         console.log(pt.join(' '));
     });
 }
 else if (cmd === 'data') {
-    var deepEqual = require('deep-equal');
-    var xyz = argv._.slice(1);
+    var xyz = getxyz('data');
     df.nn(xyz, function (err, pt, data) {
         if (err) error(err);
-        else if (deepEqual(xyz, pt)) {
+        else if (eq(xyz, pt)) {
             process.stdout.write(data);
         }
         else error(new Error('point not found'));
@@ -55,7 +54,7 @@ else if (cmd === 'data') {
 }
 else if (cmd === 'put') {
     var concat = require('concat-stream');
-    var xyz = argv._.slice(1);
+    var xyz = getxyz('put');
     process.stdin.pipe(concat(function (data) {
         df.put(xyz, data, function (err) {
             if (err) return error(err);
@@ -76,4 +75,17 @@ function error (err) {
     if (!err) return;
     console.error(err);
     process.exit(1);
+}
+
+function getxyz (cmd) {
+    var i = process.argv.indexOf(cmd);
+    return process.argv.slice(i+1).map(Number);
+}
+
+function eq (a, b) {
+    var dim = Math.max(a.length, b.length);
+    for (var i = 0; i < dim; i++) {
+        if (a[i] !== b[i]) return false;
+    }
+    return true;
 }
