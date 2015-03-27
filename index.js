@@ -18,7 +18,7 @@ function MDDF (opts) {
 
 MDDF.prototype.put = function (pt, value, cb) {
     var self = this;
-    this.queue.push([ pt, value, cb ]);
+    this.queue.push([ pt.slice(), value, cb ]);
     if (this.queue.length !== 1) return;
     (function next () {
         var q = self.queue[0];
@@ -208,6 +208,7 @@ MDDF.prototype.knn = function (k, pt, cb) {
                 }
                 else if (d < m.dist) {
                     for (var j = matches.length - 1; j > i; j--) {
+                        if (matches[j].point === null) break;
                         matches[j].point = matches[j-1].point;
                         matches[j].dist = matches[j-1].dist;
                         matches[j].offset = matches[j-1].offset;
