@@ -145,14 +145,39 @@ MDDF.prototype.nn = function (pt, cb) {
     var noffset = null;
     var nbuf = null;
     
-    (function next (index, depth) {
-        if (index * self.blksize >= self.size) {
+    self._walk(pt, function (err, ppt, offset, buf) {
+        if (err) cb(err)
+        else if (ppt === null) {
             var len = nbuf.readUInt32BE(nbuf.length - noffset - 4);
             var ndata = nbuf.slice(
                 nbuf.length - noffset - len - 4,
                 nbuf.length - noffset - 4
             );
-            return cb(null, nearest, ndata);
+            cb(null, nearest, ndata);
+        }
+        else {
+            var d = dist(pt, ppt);
+            if (nearest === null || d < ndist) {
+                nearest = ppt;
+                ndist = d;
+                noffset = offset;
+                nbuf = buf;
+            }
+        }
+    });
+};
+
+MDDF.prototype._walk = function (pt, cb) {
+    var self = this;
+    var nearest = null;
+    var ndist = null;
+    var ndata = null;
+    var noffset = null;
+    var nbuf = null;
+    
+    (function next (index, depth) {
+        if (index * self.blksize >= self.size) {
+            return cb(null, null);
         }
         self._readBlock(index, function (err, buf) {
             if (err) return cb(err);
@@ -163,13 +188,7 @@ MDDF.prototype.nn = function (pt, cb) {
                     ppt.push(buf.readFloatBE(4+i*(self.dim*4+4)+j*4));
                 }
                 var offset = buf.readUInt32BE(4+i*(self.dim*4+4)+j*4);
-                var d = dist(pt, ppt);
-                if (nearest === null || d < ndist) {
-                    nearest = ppt;
-                    ndist = d;
-                    noffset = offset;
-                    nbuf = buf;
-                }
+                cb(null, ppt, offset, buf);
             }
             
             var ix = depth % self.dim;
