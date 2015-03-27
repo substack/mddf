@@ -167,14 +167,66 @@ MDDF.prototype.nn = function (pt, cb) {
     });
 };
 
+MDDF.prototype.knn = function (k, pt, cb) {
+    var self = this;
+    var matches = [];
+    for (var i = 0; i < k; i++) {
+        matches.push({
+            point: null,
+            dist: null,
+            offset: null,
+            buf: null
+        });
+    }
+    
+    self._walk(pt, function (err, ppt, offset, buf) {
+        if (err) cb(err)
+        else if (ppt === null) {
+            var res = [];
+            for (var i = 0; i < k; i++) {
+                var m = matches[i];
+                if (m.point === null) continue;
+                var len = m.buf.readUInt32BE(m.buf.length - m.offset - 4);
+                var data = m.buf.slice(
+                    m.buf.length - m.offset - len - 4,
+                    m.buf.length - m.offset - 4
+                );
+                res.push({ point: m.point, data: data });
+            }
+            cb(null, res);
+        }
+        else {
+            var d = dist(pt, ppt);
+            for (var i = 0; i < matches.length; i++) {
+                var m = matches[i];
+                if (m.point === null) {
+                    m.point = ppt;
+                    m.dist = d;
+                    m.offset = offset;
+                    m.buf = buf;
+                    break;
+                }
+                else if (d < m.dist) {
+                    for (var j = matches.length - 1; j > i; j--) {
+                        matches[j].point = matches[j-1].point;
+                        matches[j].dist = matches[j-1].dist;
+                        matches[j].offset = matches[j-1].offset;
+                        matches[j].buf = matches[j-1].buf;
+                    }
+                    m = matches[i];
+                    m.point = ppt;
+                    m.dist = d;
+                    m.offset = offset;
+                    m.buf = buf;
+                    break;
+                }
+            }
+        }
+    });
+};
+
 MDDF.prototype._walk = function (pt, cb) {
     var self = this;
-    var nearest = null;
-    var ndist = null;
-    var ndata = null;
-    var noffset = null;
-    var nbuf = null;
-    
     (function next (index, depth) {
         if (index * self.blksize >= self.size) {
             return cb(null, null);

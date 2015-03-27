@@ -22,7 +22,8 @@ var cmd = argv._[0];
 if (argv.help || cmd === 'help') return usage(0);
 if (!argv.file) return usage(1);
 
-var mode = cmd === 'put' ? 'w+' : 'r';
+var ex = fs.existsSync(argv.file);
+var mode = cmd === 'put'? (ex ? 'r+' : 'w+') : 'r';
 
 var fd = fs.openSync(argv.file, mode);
 var stat = fs.fstatSync(fd);
@@ -40,6 +41,17 @@ if (cmd == 'nn') {
     df.nn(xyz, function (err, pt, data) {
         if (err) return error(err);
         console.log(pt.join(' '));
+    });
+}
+else if (cmd === 'knn') {
+    var kxyz = getxyz('knn', 1);
+    var k = kxyz[0];
+    var xyz = kxyz.slice(1);
+    df.knn(k, xyz, function (err, pts) {
+        if (err) return error(err);
+        for (var i = 0; i < pts.length; i++) {
+            console.log(pts[i].point.join(' '));
+        }
     });
 }
 else if (cmd === 'data') {
