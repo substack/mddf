@@ -138,21 +138,27 @@ Find the nearest neighbor to `point` as `cb(err, pt, data)`.
 # usage
 
 ```
-mddf {-f FILE} nn X Y Z ...
+mddf OPTIONS nn X Y Z ...
 
   Search for and print the nearest point to [X Y Z...].
 
-mddf {-f FILE} data X Y Z ...
+mddf OPTIONS data X Y Z ...
 
   Write the data at [X Y Z...] to stdout.
 
-mddf {-f FILE} put X Y Z ...  
+mddf OPTIONS put X Y Z ...  
 
   Put data from stdin into the point at [X Y Z...].
 
 mddf help 
 
   Show this message.
+
+OPTIONS
+
+  -f FILE  Read and write to an mddf index FILE.
+  -b SIZE  Block size. Default: 4096.
+  -d DIM   Dimension to use for coordinates.
 
 ```
 
