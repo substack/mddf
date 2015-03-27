@@ -3,7 +3,14 @@
   "version": "1.0.3",
   "description": "multi-dimensional data format with attachments for proximity search using a kd-b tree",
   "main": "index.js",
-  "dependencies": {},
+  "bin": {
+    "mddf": "bin/cmd.js"
+  },
+  "dependencies": {
+    "concat-stream": "^1.4.7",
+    "deep-equal": "^1.0.0",
+    "minimist": "^1.1.1"
+  },
   "devDependencies": {
     "tape": "^3.5.0",
     "tmpdir": "^1.0.1"

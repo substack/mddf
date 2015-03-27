@@ -1,0 +1,16 @@
+mddf {-f FILE} nn X Y Z ...
+
+  Search for and print the nearest point to [X Y Z...].
+
+mddf {-f FILE} data X Y Z ...
+
+  Write the data at [X Y Z...] to stdout.
+
+mddf {-f FILE} put X Y Z ...  
+
+  Put data from stdin into the point at [X Y Z...].
+
+mddf help 
+
+  Show this message.
+
