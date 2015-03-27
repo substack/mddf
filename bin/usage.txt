@@ -2,6 +2,10 @@ mddf OPTIONS nn X Y Z ...
 
   Search for and print the nearest point to [X Y Z...].
 
+mddf OPTIONS knn X Y Z ...
+
+  Search for and print the k nearest points to [X Y Z...].
+
 mddf OPTIONS data X Y Z ...
 
   Write the data at [X Y Z...] to stdout.
