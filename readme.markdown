@@ -135,6 +135,13 @@ with a payload of `data`, a buffer.
 
 Find the nearest neighbor to `point` as `cb(err, pt, data)`.
 
+## df.knn(k, point, cb)
+
+Find the `k` nearest neighbors to `point` as `cb(err, pts)`.
+
+`pts` will be a `k`-item array with items that have `point` and `data`
+properties.
+
 # usage
 
 ```
