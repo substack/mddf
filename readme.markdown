@@ -142,6 +142,13 @@ Find the `k` nearest neighbors to `point` as `cb(err, pts)`.
 `pts` will be a `k`-item array with items that have `point` and `data`
 properties.
 
+## df.rnn(radius, point, cb)
+
+Find every point within `radius` from `point` as `cb(err, pts)`.
+
+`pts` will be a `k`-item array with items that have `point` and `data`
+properties.
+
 # usage
 
 ```
@@ -152,6 +159,10 @@ mddf OPTIONS nn X Y Z ...
 mddf OPTIONS knn X Y Z ...
 
   Search for and print the k nearest points to [X Y Z...].
+ 
+mddf OPTIONS rnn R X Y Z ...
+
+  Search for and print every point within a radius R from [X Y Z...].
 
 mddf OPTIONS data X Y Z ...
 
@@ -172,15 +183,6 @@ OPTIONS
   -d DIM   Dimension to use for coordinates.
 
 ```
-
-# todo
-
-[static-kdtree](https://npmjs.com/package/static-kdtree) has these other
-methods, they are probably worth implementing here:
-
-* range
-* rnn
-* knn
 
 # data format
 
