@@ -229,7 +229,7 @@ MDDF.prototype.rnn = function (r, pt, cb) {
             var d = dist(pt, ppt);
             if(d < r){
                 matches.push({
-                    point: pt,
+                    point: ppt,
                     buf: buf
                 });
             }
