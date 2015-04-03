@@ -178,21 +178,11 @@ MDDF.prototype.knn = function (k, pt, cb) {
             buf: null
         });
     }
-    
+
     self._walk(pt, function (err, ppt, offset, buf) {
-        if (err) cb(err)
+        if (err) cb(err);
         else if (ppt === null) {
-            var res = [];
-            for (var i = 0; i < k; i++) {
-                var m = matches[i];
-                if (m.point === null) continue;
-                var len = m.buf.readUInt32BE(m.buf.length - m.offset - 4);
-                var data = m.buf.slice(
-                    m.buf.length - m.offset - len - 4,
-                    m.buf.length - m.offset - 4
-                );
-                res.push({ point: m.point, data: data });
-            }
+            var res = mapWithData(matches);
             cb(null, res);
         }
         else {
@@ -232,17 +222,7 @@ MDDF.prototype.rnn = function (r, pt, cb) {
     self._walk(pt, function (err, ppt, offset, buf) {
         if (err) cb(err);
         else if (ppt === null) {
-            var res = [];
-            for (var i = 0; i < matches.length; i++) {
-                var m = matches[i];
-                if (m.point === null) continue;
-                var len = m.buf.readUInt32BE(m.buf.length - m.offset - 4);
-                var data = m.buf.slice(
-                    m.buf.length - m.offset - len - 4,
-                    m.buf.length - m.offset - 4
-                );
-                res.push({ point: m.point, data: data });
-            }
+            var res = mapWithData(matches);
             cb(null, res);
         }
         else {
@@ -287,6 +267,22 @@ MDDF.prototype._walk = function (pt, cb) {
         });
     })(0, 0);
 };
+
+function mapWithData(matches){
+    var res = [];
+    for (var i = 0; i < matches.length; i++) {
+        var m = matches[i];
+        if (m.point === null) continue;
+        var len = m.buf.readUInt32BE(m.buf.length - m.offset - 4);
+        var data = m.buf.slice(
+            m.buf.length - m.offset - len - 4,
+            m.buf.length - m.offset - 4
+        );
+        res.push({ point: m.point, data: data });
+    }
+
+    return res;
+}
 
 function dist (a, b) {
     var sum = 0;
