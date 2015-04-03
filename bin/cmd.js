@@ -54,6 +54,17 @@ else if (cmd === 'knn') {
         }
     });
 }
+else if (cmd === 'rnn') {
+    var rxyz = getxyz('rnn', 1);
+    var r = rxyz[0];
+    var xyz = rxyz.slice(1);
+    df.rnn(r, xyz, function (err, pts) {
+        if (err) return error(err);
+        for (var i = 0; i < pts.length; i++) {
+            console.log(pts[i].point.join(' '));
+        }
+    });
+}
 else if (cmd === 'data') {
     var xyz = getxyz('data');
     df.nn(xyz, function (err, pt, data) {
