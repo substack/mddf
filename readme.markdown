@@ -6,16 +6,17 @@ for proximity search using a kd-b tree
 # motivation
 
 Multidimensional data is important for maps, because you are always
-interesting in things within a range defined in two or three dimensions
-(though mddf can do N dimensions). Currently popular methods of storing
+interested in things within a range defined in two or three dimensions
+(though mddf can do N dimensions). Many popular methods of storing
 map data are not memory efficient, and you must load the entire dataset
-into ram before it can be used. mddf arranges data more sensibly,
-so it's actually possible to seek into the file, reading only a small
-segment, and pull out a collection of nearby points. This means map
-programs could load fast, work with massive maps and run on tiny devices.
+into RAM or a specialized heavy database engine before it can be used. mddf
+arranges data more sensibly, so it's actually possible to seek into the file,
+reading only a small segment, and pull out a collection of nearby points. This
+means map programs could load fast, work with massive maps and run on tiny
+devices.
 
-There is nothing in mddf that is specifically about maps, but that
-is the use case that motivates this work.
+There is nothing in mddf that is specifically about maps, but that is the use
+case that motivates this work.
 
 # command example
 
