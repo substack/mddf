@@ -48,10 +48,12 @@ test('populate for rnn', function (t) {
 
 test('radius nearest neighbors', function (t) {
     var times = 100;
-    t.plan(times * 2);
 
     (function next () {
-        if (--times < 0) return;
+        if (--times < 0){
+            t.end();
+            return;
+        }
 
         var pt = rpoint();
         var radius = 10;
@@ -66,6 +68,11 @@ test('radius nearest neighbors', function (t) {
         df.rnn(radius, pt, function (err, res) {
             t.ifError(err);
             t.equal(res.length, expected.length);
+            for (var i = 0; i < res.length; i++) {
+                var found = res[i];
+                var key = found.point.join(',');
+                t.deepEqual(found.data, data[key]);
+            }
             next();
         });
     })();

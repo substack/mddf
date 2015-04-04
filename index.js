@@ -231,7 +231,8 @@ MDDF.prototype.rnn = function (r, pt, cb) {
             if(d < r){
                 matches.push({
                     point: ppt,
-                    buf: buf
+                    buf: buf,
+                    offset: offset
                 });
             }
         }
