@@ -238,6 +238,11 @@ MDDF.prototype.rnn = function (r, pt, cb) {
     });
 };
 
+MDDF.prototype.near = function (pt) {
+    return function (cb) {
+    };
+};
+
 MDDF.prototype._walk = function (pt, cb) {
     var self = this;
     (function next (index, depth) {
