@@ -23,6 +23,7 @@ MDDF.prototype.put = function (pt, value, cb) {
     (function next () {
         var q = self.queue[0];
         self._put(q[0], q[1], function (err) {
+            var cb = q[2];
             if (cb) cb(err);
             self.queue.shift();
             if (self.queue.length > 0) next();
