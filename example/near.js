@@ -13,9 +13,9 @@ var df = mddf({
 
 var near = df.near(process.argv.slice(2));
 (function next () {
-    near.next(function (err, pt, data) {
+    near(function (err, pt, data) {
+        console.log(err, pt)
         if (!pt) return;
-        console.log(pt);
-        next();
+        process.nextTick(next);
     });
 })();

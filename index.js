@@ -1,5 +1,7 @@
 var fs = require('fs');
 var Buffer = require('buffer').Buffer;
+var Readable = require('readable-stream');
+var proximity = require('./lib/proximity.js');
 
 module.exports = MDDF;
 
@@ -240,8 +242,72 @@ MDDF.prototype.rnn = function (r, pt, cb) {
 };
 
 MDDF.prototype.near = function (pt) {
-    return function (cb) {
+    var self = this;
+    var current = [];
+    var prox = null;
+    var r = new Readable;
+    var i, len, buf = null;
+    
+    return function next (cb) {
+        if (prox === null) {
+            return self._walkDown(pt, function (err, index) {
+                if (err) return cb(err);
+                prox = proximity(index, self.size / self.blksize);
+                next(cb);
+            });
+        }
+        if (buf === null) {
+            var index = prox();
+            if (index === null) return r.push(null);
+            return self._readBlock(index, function (err, buf_) {
+                if (err) return cb(err);
+                buf = buf_;
+                i = 0;
+                len = buf.readUInt32BE(0);
+                next(cb);
+            });
+        }
+        if (i >= len) {
+            buf = null;
+            return next(cb);
+        }
+        
+        var ppt = [];
+        for (var j = 0; j < self.dim; j++) {
+            ppt.push(buf.readFloatBE(4+i*(self.dim*4+4)+j*4));
+        }
+        var offset = buf.readUInt32BE(4+i*(self.dim*4+4)+j*4);
+        var data = buf.slice(
+            buf.length - offset - len - 4,
+            buf.length - offset - 4
+        );
+        
+        cb(null, { point: ppt, data: data });
+        if (++i >= len) buf = null;
     };
+};
+
+MDDF.prototype._walkDown = function (pt, cb) {
+    var self = this;
+    (function next (index, prev, depth) {
+        if (index * self.blksize >= self.size) {
+            return cb(null, prev);
+        }
+        prev = index;
+        
+        self._readBlock(index, function (err, buf) {
+            if (err) return cb(err);
+            var ix = depth % self.dim;
+            var pivot = buf.readFloatBE(4 + ix * 4);
+            
+            if (pt[ix] < pivot) {
+                next(index * 2 + 1, index, depth + 1);
+            }
+            else {
+                next((index + 1) * 2, index, depth + 1);
+            }
+        });
+    })(0, 0, 0);
 };
 
 MDDF.prototype._walk = function (pt, cb) {
@@ -252,15 +318,7 @@ MDDF.prototype._walk = function (pt, cb) {
         }
         self._readBlock(index, function (err, buf) {
             if (err) return cb(err);
-            var len = buf.readUInt32BE(0);
-            for (var i = 0; i < len; i++) {
-                var ppt = [];
-                for (var j = 0; j < self.dim; j++) {
-                    ppt.push(buf.readFloatBE(4+i*(self.dim*4+4)+j*4));
-                }
-                var offset = buf.readUInt32BE(4+i*(self.dim*4+4)+j*4);
-                cb(null, ppt, offset, buf);
-            }
+            self._eachPoint(buf, cb);
             
             var ix = depth % self.dim;
             var pivot = buf.readFloatBE(4 + ix * 4);
@@ -275,6 +333,18 @@ MDDF.prototype._walk = function (pt, cb) {
     })(0, 0);
 };
 
+MDDF.prototype._eachPoint = function (buf, cb) {
+    var len = buf.readUInt32BE(0);
+    for (var i = 0; i < len; i++) {
+        var ppt = [];
+        for (var j = 0; j < this.dim; j++) {
+            ppt.push(buf.readFloatBE(4+i*(this.dim*4+4)+j*4));
+        }
+        var offset = buf.readUInt32BE(4+i*(this.dim*4+4)+j*4);
+        cb(null, ppt, offset, buf);
+    }
+};
+
 function mapWithData(matches){
     var res = [];
     for (var i = 0; i < matches.length; i++) {
@@ -287,7 +357,6 @@ function mapWithData(matches){
         );
         res.push({ point: m.point, data: data });
     }
-
     return res;
 }
 

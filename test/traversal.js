@@ -1,4 +1,4 @@
-var traversal = require('../lib/traversal.js');
+var traversal = require('../lib/proximity.js');
 var test = require('tape');
 
 test('proximity traversal', function (t) {
