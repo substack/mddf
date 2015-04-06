@@ -1,6 +1,5 @@
 var fs = require('fs');
 var Buffer = require('buffer').Buffer;
-var Readable = require('readable-stream');
 var proximity = require('./lib/proximity.js');
 
 module.exports = MDDF;
@@ -245,7 +244,6 @@ MDDF.prototype.near = function (pt) {
     var self = this;
     var current = [];
     var prox = null;
-    var r = new Readable;
     var i, len, buf = null;
     
     return function next (cb) {
@@ -282,7 +280,7 @@ MDDF.prototype.near = function (pt) {
             buf.length - offset - 4
         );
         
-        cb(null, { point: ppt, data: data });
+        cb(null, ppt, data);
         if (++i >= len) buf = null;
     };
 };
