@@ -164,6 +164,16 @@ Find every point within `radius` from `point` as `cb(err, pts)`.
 `pts` will be a `k`-item array with items that have `point` and `data`
 properties.
 
+## var next = df.near(point)
+
+Return an iterator function `next()` with a stream of nearby points according to
+a walk of the underlying kd-b tree. The proximity of the points has more to do
+with how the blocks are organized and embodies the storage trade-off of fetching
+blocks again.
+
+Call `next(cb)` with a callback that will get called with `cb(err, pt, data)` to
+get each point with its data.
+
 # usage
 
 ```
