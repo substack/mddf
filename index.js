@@ -256,7 +256,8 @@ MDDF.prototype.near = function (pt) {
         }
         if (buf === null) {
             var index = prox();
-            if (index === null) return r.push(null);
+            if (index === null) return cb(null, null);
+            
             return self._readBlock(index, function (err, buf_) {
                 if (err) return cb(err);
                 buf = buf_;
