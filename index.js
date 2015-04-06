@@ -1,6 +1,7 @@
 var fs = require('fs');
 var Buffer = require('buffer').Buffer;
 var proximity = require('./lib/proximity.js');
+var dist = require('euclidean-distance');
 
 module.exports = MDDF;
 
@@ -357,12 +358,4 @@ function mapWithData(matches){
         res.push({ point: m.point, data: data });
     }
     return res;
-}
-
-function dist (a, b) {
-    var sum = 0;
-    for (var i = 0; i < a.length; i++) {
-        sum += (a[i]-b[i])*(a[i]-b[i]);
-    }
-    return Math.sqrt(sum);
 }
