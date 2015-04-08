@@ -33,19 +33,30 @@ MDDF.prototype.put = function (pt, value, cb) {
     (function next () {
         var q = self.queue[0];
         self._put(q[0], q[1], function (err, index, depth) {
+            var cb = q[2];
             if (!err && self.blocks !== undefined) {
                 self.blocks ++;
                 if (depth > Math.log(self.blocks) / self.logia + 1) {
-                    console.log('scapegoat!!!');
+                    return self._scapegoat(index, depth, function (e) {
+                        if (e) err = e;
+                        finish();
+                    });
                 }
             }
+            finish();
             
-            var cb = q[2];
-            if (cb) cb(err);
-            self.queue.shift();
-            if (self.queue.length > 0) next();
+            function finish () {
+                if (cb) cb(err);
+                self.queue.shift();
+                if (self.queue.length > 0) next();
+            }
         });
     })();
+};
+
+MDDF.prototype._scapegoat = function (index, depth, cb) {
+    // ...
+    console.log('todo');
 };
     
 MDDF.prototype._put = function (pt, value, cb) {
