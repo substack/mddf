@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "concat-stream": "^1.4.7",
+    "defined": "0.0.0",
     "euclidean-distance": "^0.1.0",
     "minimist": "^1.1.1"
   },

@@ -2,6 +2,7 @@ var fs = require('fs');
 var Buffer = require('buffer').Buffer;
 var proximity = require('./lib/proximity.js');
 var dist = require('euclidean-distance');
+var defined = require('defined');
 
 module.exports = MDDF;
 
@@ -14,8 +15,15 @@ function MDDF (opts) {
     this.blksize = opts.blksize || 4096;
     this.dim = opts.dim;
     this.B = Math.floor((this.blksize - 4) / (this.dim * 4 + 4));
-    this.size = opts.size || 0;
+    this.size = defined(opts.size, 0);
     this.queue = [];
+    
+    this.alpha = defined(opts.alpha, 0.5);
+    this.depth = defined(opts.depth, 0);
+    this.blocks = defined(opts.blocks, this.size === 0 ? 0 : undefined);
+    
+    this.logia = Math.log(1 / this.alpha);
+    // height(tree) <= log(NodeCount)/log(1/α) + 1
 }
 
 MDDF.prototype.put = function (pt, value, cb) {
@@ -24,7 +32,14 @@ MDDF.prototype.put = function (pt, value, cb) {
     if (this.queue.length !== 1) return;
     (function next () {
         var q = self.queue[0];
-        self._put(q[0], q[1], function (err) {
+        self._put(q[0], q[1], function (err, index, depth) {
+            if (!err && self.blocks !== undefined) {
+                self.blocks ++;
+                if (depth > Math.log(self.blocks) / self.logia + 1) {
+                    console.log('scapegoat!!!');
+                }
+            }
+            
             var cb = q[2];
             if (cb) cb(err);
             self.queue.shift();
@@ -63,7 +78,9 @@ MDDF.prototype._put = function (pt, value, cb) {
                 var dataix = self._putData(buf, value);
                 buf.writeUInt32BE(dataix, offset + i*4);
                 
-                return self._writeBlock(index, buf, cb);
+                return self._writeBlock(index, buf, function (err) {
+                    cb(err, index, depth);
+                });;
             }
             
             var ix = depth % self.dim;
