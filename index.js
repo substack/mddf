@@ -55,8 +55,22 @@ MDDF.prototype.put = function (pt, value, cb) {
 };
 
 MDDF.prototype._scapegoat = function (index, depth, cb) {
-    // ...
-    console.log('todo');
+    var self = this;
+    console.log('scapegoat');
+    
+    
+    
+    /*
+    (function next (ix) {
+        var side = ix % 2; // 0: right, 1: left
+        var p = Math.floor((index - 1) / 2);
+        
+        var left = 
+        var right = 
+        
+        // this.alpha
+    })(index);
+    */
 };
     
 MDDF.prototype._put = function (pt, value, cb) {
@@ -69,8 +83,10 @@ MDDF.prototype._put = function (pt, value, cb) {
     }
     
     (function next (index, depth) {
+        var before = self.size;
         self._readBlock(index, function (err, buf) {
             if (err) return cb(err);
+            
             var free = self._available(buf);
             var needed = self.dim * 4 + 4 + value.length + 4;
             if (needed > self.blksize) {
@@ -89,9 +105,24 @@ MDDF.prototype._put = function (pt, value, cb) {
                 var dataix = self._putData(buf, value);
                 buf.writeUInt32BE(dataix, offset + i*4);
                 
-                return self._writeBlock(index, buf, function (err) {
-                    cb(err, index, depth);
-                });;
+                var pending = 1;
+                if (self.size > before) {
+                    // allocate new blocks as empty
+                    var ebuf = self._emptyBlock();
+                    
+                    pending = (self.size - before) / self.blksize;
+                    for (var i = before; i < self.size; i += self.blksize) {
+                        var b = i === index ? buf : ebuf;
+                        self._writeBlock(i, ebuf, finish);
+                    }
+                    return;
+                }
+                return self._writeBlock(index, buf, finish);
+                
+                function finish (err) {
+                    if (err) cb(err)
+                    else if (-- pending === 0) cb(err, index, depth)
+                }
             }
             
             var ix = depth % self.dim;
@@ -120,6 +151,13 @@ MDDF.prototype._putData = function (buf, value) {
     return buf.length - offset;
 };
 
+MDDF.prototype._emptyBlock = function () {
+    var buf = new Buffer(this.blksize);
+    buf.writeUInt32BE(0, 0); // ptlen
+    buf.writeUInt32BE(0, buf.length - 4); // datalen
+    return buf;
+};
+
 MDDF.prototype._available = function (buf) {
     var ptlen = buf.readUInt32BE(0);
     var datalen = buf.readUInt32BE(buf.length - 4);
@@ -139,10 +177,7 @@ MDDF.prototype._readBlock = function (n, cb) {
     var offset = n * this.blksize;
     if (offset >= this.size) {
         this.size = (n + 1) * this.blksize;
-        var buf = Buffer(this.blksize);
-        buf.writeUInt32BE(0, 0); // ptlen
-        buf.writeUInt32BE(0, buf.length-4); // datalen
-        return cb(null, buf);
+        return cb(null, this._emptyBlock());
     }
     var buf = Buffer(this.blksize);
     this._reader(buf, 0, this.blksize, offset, onread);
