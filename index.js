@@ -23,7 +23,7 @@ function MDDF (opts) {
     this.blocks = defined(opts.blocks, this.size === 0 ? 0 : undefined);
     
     this.logia = Math.log(1 / this.alpha);
-    // height(tree) <= log(NodeCount)/log(1/α) + 1
+    // height(tree) <= log(NodeCount)/log(1/alpha) + 1
 }
 
 MDDF.prototype.put = function (pt, value, cb) {
@@ -37,7 +37,7 @@ MDDF.prototype.put = function (pt, value, cb) {
             if (!err && self.blocks !== undefined) {
                 self.blocks ++;
                 if (depth > Math.log(self.blocks) / self.logia + 1) {
-                    return self._scapegoat(index, depth, function (e) {
+                    return self._scapegoat(index, function (e) {
                         if (e) err = e;
                         finish();
                     });
@@ -54,23 +54,40 @@ MDDF.prototype.put = function (pt, value, cb) {
     })();
 };
 
-MDDF.prototype._scapegoat = function (index, depth, cb) {
+MDDF.prototype._scapegoat = function (index, cb) {
     var self = this;
-    console.log('scapegoat');
-    
-    
-    
-    /*
-    (function next (ix) {
+    (function next (ix, asize) {
         var side = ix % 2; // 0: right, 1: left
-        var p = Math.floor((index - 1) / 2);
-        
-        var left = 
-        var right = 
-        
-        // this.alpha
-    })(index);
-    */
+        var other = side === 0 ? ix - 1 : ix + 1;
+        self._size(other, function (err, bsize) {
+            if (err) return cb(err);
+            var nsize = asize + bsize + 1;
+            if (asize > self.alpha * nsize || bsize > self.alpha * nsize) {
+                // candidate found!!!
+                console.log('CANDIDATE', ix, index);
+            }
+            else next(Math.floor((ix-1)/2), nsize);
+        });
+    })(index, 1);
+};
+
+MDDF.prototype._size = function (index, cb) {
+    var self = this;
+    if (index * self.blksize >= self.size) return cb(null, 0);
+    
+    self._readBlock(index, function f (err, buf) {
+        if (err) return cb(err);
+        var ptlen = buf.readUInt32BE(0);
+        if (ptlen === 0) return cb(null, 0);
+        var pending = 2, sum = 1;
+        self._size(index * 2 + 1, next);
+        self._size((index + 1) * 2, next);
+        function next (err, size) {
+            if (err) return cb(err);
+            sum += size;
+            if (--pending === 0) cb(null, sum);
+        }
+    });
 };
     
 MDDF.prototype._put = function (pt, value, cb) {
@@ -87,6 +104,7 @@ MDDF.prototype._put = function (pt, value, cb) {
         self._readBlock(index, function (err, buf) {
             if (err) return cb(err);
             
+            var ptlen = buf.readUInt32BE(0);
             var free = self._available(buf);
             var needed = self.dim * 4 + 4 + value.length + 4;
             if (needed > self.blksize) {
@@ -95,8 +113,6 @@ MDDF.prototype._put = function (pt, value, cb) {
             
             if (free >= needed) {
                 // not full, add point
-                var ptlen = buf.readUInt32BE(0);
-                
                 buf.writeUInt32BE(ptlen + 1, 0);
                 var offset = 4 + ptlen * (self.dim * 4 + 4);
                 for (var i = 0; i < pt.length; i++) {
