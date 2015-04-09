@@ -242,6 +242,33 @@ MDDF.prototype.rnn = function (r, pt, cb) {
     });
 };
 
+MDDF.prototype.range = function (lo, hi, cb) {
+    var self = this;
+    var matches = [];
+
+    self._walk(pt, function (err, ppt, offset, buf) {
+        if (err) cb(err);
+        else if (ppt === null) {
+            var res = mapWithData(matches);
+            cb(null, res);
+        }
+        else {
+            for(var i = 0; i < self.dim; i++){
+                var value = ppt[i];
+                if((value < lo[i] && value < hi[i]) || (value > lo[i] && value > hi[i])){
+                    return;
+                }
+            }
+
+            matches.push({
+                point: ppt,
+                buf: buf,
+                offset: offset
+            });
+        }
+    });
+};
+
 MDDF.prototype.near = function (pt) {
     var self = this;
     var current = [];
