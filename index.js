@@ -71,6 +71,12 @@ MDDF.prototype._scapegoat = function (index, cb) {
                 // candidate found at ix
                 
                 console.log('CANDIDATE', ix, index, pivots);
+                
+                var medians = [];
+                for (var d = 0; d < self.dim; d++) {
+                    medians.push(median(pivots, d));
+                }
+                console.log(medians);
             }
             else next(Math.floor((ix-1)/2), nsize);
         });
@@ -454,4 +460,11 @@ function mapWithData(matches){
         res.push({ point: m.point, data: data });
     }
     return res;
+}
+
+function median (pts, dim) {
+    var ids = Object.keys(pts).sort(function (a, b) {
+        return pts[a][dim] < pts[b][dim] ? -1 : 1;
+    });
+    return ids[Math.floor(ids.length/2)];
 }
