@@ -12,7 +12,7 @@ var df = mddf({
     write: fs.write.bind(null, fd)
 });
 
-var size = 10000;
+var size = 20000;
 (function next () {
     if (-- size < 0) {
         return fs.ftruncate(fd, df.size, function () { fs.close(fd) });

@@ -56,15 +56,21 @@ MDDF.prototype.put = function (pt, value, cb) {
 
 MDDF.prototype._scapegoat = function (index, cb) {
     var self = this;
+    var pivots = {};
     (function next (ix, asize) {
         var side = ix % 2; // 0: right, 1: left
         var other = side === 0 ? ix - 1 : ix + 1;
-        self._size(other, function (err, bsize) {
+        self._size(other, function (err, bsize, pivots_) {
             if (err) return cb(err);
+            Object.keys(pivots_).forEach(function (key) {
+                pivots[key] = pivots_[key];
+            });
             var nsize = asize + bsize + 1;
-            if (asize > self.alpha * nsize || bsize > self.alpha * nsize) {
-                // candidate found!!!
-                console.log('CANDIDATE', ix, index);
+            if ((asize > self.alpha * nsize || bsize > self.alpha * nsize)
+            && ix < index) {
+                // candidate found at ix
+                
+                console.log('CANDIDATE', ix, index, pivots);
             }
             else next(Math.floor((ix-1)/2), nsize);
         });
@@ -73,21 +79,31 @@ MDDF.prototype._scapegoat = function (index, cb) {
 
 MDDF.prototype._size = function (index, cb) {
     var self = this;
-    if (index * self.blksize >= self.size) return cb(null, 0);
-    
-    self._readBlock(index, function f (err, buf) {
-        if (err) return cb(err);
-        var ptlen = buf.readUInt32BE(0);
-        if (ptlen === 0) return cb(null, 0);
-        var pending = 2, sum = 1;
-        self._size(index * 2 + 1, next);
-        self._size((index + 1) * 2, next);
-        function next (err, size) {
-            if (err) return cb(err);
-            sum += size;
-            if (--pending === 0) cb(null, sum);
-        }
-    });
+    var pivots = {};
+    (function readsize (ix, fn) {
+        if (ix * self.blksize >= self.size) return fn(null, 0);
+        self._readBlock(ix, function f (err, buf) {
+            if (err) return fn(err);
+            var ptlen = buf.readUInt32BE(0);
+            if (ptlen === 0) return fn(null, 0);
+            
+            var pivot = Array(self.dim);
+            for (var i = 0; i < self.dim; i++) {
+                pivot[i] = buf.readFloatBE(i*4+4);
+            }
+            pivots[ix] = pivot;
+            
+            var pending = 2, sum = 1;
+            readsize(ix * 2 + 1, next);
+            readsize((ix + 1) * 2, next);
+            
+            function next (err, size) {
+                if (err) return fn(err);
+                sum += size;
+                if (--pending === 0) fn(null, sum);
+            }
+        });
+    })(index, function (err, size) { cb(err, size, pivots) });
 };
     
 MDDF.prototype._put = function (pt, value, cb) {
