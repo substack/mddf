@@ -246,7 +246,7 @@ MDDF.prototype.range = function (lo, hi, cb) {
     var self = this;
     var matches = [];
 
-    self._walk(pt, function (err, ppt, offset, buf) {
+    self._walk(lo, function (err, ppt, offset, buf) {
         if (err) cb(err);
         else if (ppt === null) {
             var res = mapWithData(matches);
