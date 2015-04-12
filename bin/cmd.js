@@ -65,6 +65,16 @@ else if (cmd === 'rnn') {
         }
     });
 }
+else if (cmd === 'range') {
+    var lo = argv.lo.split(' ').map(Number);
+    var hi = argv.hi.split(' ').map(Number);
+    df.range(lo, hi, function (err, pts) {
+        if (err) return error(err);
+        for (var i = 0; i < pts.length; i++) {
+            console.log(pts[i].point.join(' '));
+        }
+    });
+}
 else if (cmd === 'data') {
     var xyz = getxyz('data');
     df.nn(xyz, function (err, pt, data) {
