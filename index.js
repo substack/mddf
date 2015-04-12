@@ -255,7 +255,7 @@ MDDF.prototype.range = function (lo, hi, cb) {
         else {
             for(var i = 0; i < self.dim; i++){
                 var value = ppt[i];
-                if((value < lo[i] && value < hi[i]) || (value > lo[i] && value > hi[i])){
+                if((value < lo[i] || value > hi[i])){
                     return;
                 }
             }
