@@ -32,12 +32,17 @@ MDDF.prototype.put = function (pt, value, cb) {
     if (this.queue.length !== 1) return;
     (function next () {
         var q = self.queue[0];
-        self._put(q[0], q[1], function (err, index, depth) {
+        self._put(q[0], q[1], function (err, index, depth, buf) {
             var cb = q[2];
             if (!err && self.blocks !== undefined) {
+                var pt = [];
+                for (var i = 0; i < self.dim; i++) {
+                    pt.push(buf.readFloatBE(i*4+4));
+                }
+                
                 self.blocks ++;
                 if (depth > Math.log(self.blocks) / self.logia + 1) {
-                    return self._scapegoat(index, function (e) {
+                    return self._scapegoat(index, pt, function (e) {
                         if (e) err = e;
                         finish();
                     });
@@ -54,33 +59,47 @@ MDDF.prototype.put = function (pt, value, cb) {
     })();
 };
 
-MDDF.prototype._scapegoat = function (index, cb) {
+MDDF.prototype._scapegoat = function (index, pt, cb) {
     var self = this;
     var pivots = {};
+    pivots[index] = pt;
+    var pivotn = 0;
+    
     (function next (ix, asize) {
         var side = ix % 2; // 0: right, 1: left
-        var other = side === 0 ? ix - 1 : ix + 1;
+        var other = side === 0 ? ix + 1 : ix - 1;
         self._size(other, function (err, bsize, pivots_) {
             if (err) return cb(err);
             Object.keys(pivots_).forEach(function (key) {
                 pivots[key] = pivots_[key];
+                pivotn ++;
             });
             var nsize = asize + bsize + 1;
             if ((asize > self.alpha * nsize || bsize > self.alpha * nsize)
-            && ix < index) {
+            && ix < index && pivotn > 2) {
                 // candidate found at ix
-                
-                console.log('CANDIDATE', ix, index, pivots);
-                
-                var medians = [];
-                for (var d = 0; d < self.dim; d++) {
-                    medians.push(median(pivots, d));
-                }
-                console.log(medians);
+                self._rebuild(ix, pivots, cb);
             }
             else next(Math.floor((ix-1)/2), nsize);
         });
     })(index, 1);
+};
+
+MDDF.prototype._rebuild = function (ix, pivots, cb) {
+    var self = this;
+    var depth = Math.floor(Math.log(ix) / Math.LN2);
+    var keys = Object.keys(pivots).map(Number);
+    
+    console.log('PIVOTS', pivots, depth);
+    var sorted = (function sort (ids, d) {
+        if (ids.length === 0) return [];
+        var parted = part(d % self.dim, ids, pivots);
+        return [ parted.node ].concat(
+            sort(parted.left, d+1),
+            sort(parted.right, d+1)
+        );
+    })(keys, depth);
+    console.log('SORTED', sorted);
 };
 
 MDDF.prototype._size = function (index, cb) {
@@ -159,7 +178,7 @@ MDDF.prototype._put = function (pt, value, cb) {
                 
                 function finish (err) {
                     if (err) cb(err)
-                    else if (-- pending === 0) cb(err, index, depth)
+                    else if (-- pending === 0) cb(err, index, depth, buf)
                 }
             }
             
@@ -462,9 +481,14 @@ function mapWithData(matches){
     return res;
 }
 
-function median (pts, dim) {
-    var ids = Object.keys(pts).sort(function (a, b) {
+function part (dim, keys, pts) {
+    var ids = keys.sort(function (a, b) {
         return pts[a][dim] < pts[b][dim] ? -1 : 1;
     });
-    return ids[Math.floor(ids.length/2)];
+    var ix = Math.floor(ids.length / 2);
+    return {
+        left: ids.slice(0, ix),
+        node: ids[ix],
+        right: ids.slice(ix+1)
+    };
 }
