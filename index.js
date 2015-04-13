@@ -88,7 +88,6 @@ MDDF.prototype._rebuild = function (ix, pivots, cb) {
     var depth = Math.floor(Math.log(ix) / Math.LN2);
     var keys = Object.keys(pivots).map(Number);
     
-    console.log('PIVOTS', pivots, depth);
     var sorted = (function sort (ids, d) {
         if (ids.length === 0) return [];
         var parted = part(d % self.dim, ids, pivots);
@@ -97,10 +96,41 @@ MDDF.prototype._rebuild = function (ix, pivots, cb) {
             sort(parted.right, d+1)
         );
     })(keys, depth);
-    console.log('SORTED', ix, sorted);
     
-    for (var i = 0; i < sorted.length; i++) {
-        var ii = i + ix;
+    var indexes = [];
+    (function next (i) {
+        if (indexes.length >= sorted.length) return;
+        indexes.push(i);
+        next(i * 2 + 1);
+        next((i + 1) * 2);
+    })(ix);
+    
+    var buffers = {};
+    (function next (i) {
+        if (i === sorted.length) return writeBlock();
+        self._readBlock(indexes[i], function (err, buf) {
+            if (err) return cb(err);
+            buffers[sorted[i]] = buf;
+            next(i+1);
+        });
+    })(0);
+    
+    function writeBlock (err) {
+        if (err) return cb(err);
+        if (indexes.length === 0) return writeZeros();
+        var i = indexes.shift();
+        var x = sorted.shift();
+        delete pivots[i];
+        self._writeBlock(i, buffers[x], writeBlock);
+    }
+    function writeZeros () {
+        var rem = Object.keys(pivots);
+        (function next (err) {
+            if (err) return cb(err);
+            if (rem.length === 0) return cb(null);
+            var i = rem.shift();
+            self._writeBlock(i, self._emptyBlock(), next);
+        })();
     }
 };
 
