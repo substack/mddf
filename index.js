@@ -66,9 +66,7 @@ MDDF.prototype._scapegoat = function (index, pt, cb) {
     var pivotn = 0;
     
     (function next (ix, asize) {
-        var side = ix % 2; // 0: right, 1: left
-        var other = side === 0 ? ix + 1 : ix - 1;
-        self._size(other, function (err, bsize, pivots_) {
+        self._size(ix, function (err, bsize, pivots_) {
             if (err) return cb(err);
             Object.keys(pivots_).forEach(function (key) {
                 pivots[key] = pivots_[key];
@@ -99,7 +97,11 @@ MDDF.prototype._rebuild = function (ix, pivots, cb) {
             sort(parted.right, d+1)
         );
     })(keys, depth);
-    console.log('SORTED', sorted);
+    console.log('SORTED', ix, sorted);
+    
+    for (var i = 0; i < sorted.length; i++) {
+        var ii = i + ix;
+    }
 };
 
 MDDF.prototype._size = function (index, cb) {
