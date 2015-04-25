@@ -10,6 +10,10 @@ mddf OPTIONS rnn R X Y Z ...
 
   Search for and print every point within a radius R from [X Y Z...].
 
+mddf OPTIONS range --lo="X1 Y1 Z1 ..." --hi "X2 Y2 Z2 ..."
+
+  Search for and print every point within boundary hyperrectangle represented by two points lo and hi
+
 mddf OPTIONS data X Y Z ...
 
   Write the data at [X Y Z...] to stdout.
