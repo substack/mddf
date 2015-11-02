@@ -7,14 +7,9 @@ module.exports = MDDF;
 
 function MDDF (opts) {
     if (!(this instanceof MDDF)) return new MDDF(opts);
-    
-    this._reader = opts.read;
-    this._writer = opts.write;
-    
-    this.blksize = opts.blksize || 4096;
+    this.store = opts.store;
+    this.size = opts.size;
     this.dim = opts.dim;
-    this.B = Math.floor((this.blksize - 4) / (this.dim * 4 + 4));
-    this.size = opts.size || 0;
     this.queue = [];
 }
 
@@ -35,19 +30,17 @@ MDDF.prototype.put = function (pt, value, cb) {
     
 MDDF.prototype._put = function (pt, value, cb) {
     var self = this;
-    if (!self._writer) {
-        return cb(new Error('cannot put points: no write function defined'));
-    }
     if (self.dim !== pt.length) {
         return cb(new Error('inconsistent dimension'));
     }
     
     (function next (index, depth) {
-        self._readBlock(index, function (err, buf) {
+        self.store.get(index, function (err, buf) {
             if (err) return cb(err);
+            if (buf.length === 0) buf = self._createBlock();
             var free = self._available(buf);
             var needed = self.dim * 4 + 4 + value.length + 4;
-            if (needed > self.blksize) {
+            if (needed > self.size) {
                 return cb(new Error('block too large'));
             }
             
@@ -63,7 +56,7 @@ MDDF.prototype._put = function (pt, value, cb) {
                 var dataix = self._putData(buf, value);
                 buf.writeUInt32BE(dataix, offset + i*4);
                 
-                return self._writeBlock(index, buf, cb);
+                return self.store.put(index, buf, cb);
             }
             
             var ix = depth % self.dim;
@@ -104,40 +97,6 @@ MDDF.prototype._available = function (buf) {
         free -= len + 4;
     }
     return free;
-};
-
-MDDF.prototype._readBlock = function (n, cb) {
-    var self = this;
-    var offset = n * this.blksize;
-    if (offset >= this.size) {
-        this.size = (n + 1) * this.blksize;
-        var buf = Buffer(this.blksize);
-        buf.writeUInt32BE(0, 0); // ptlen
-        buf.writeUInt32BE(0, buf.length-4); // datalen
-        return cb(null, buf);
-    }
-    var buf = Buffer(this.blksize);
-    this._reader(buf, 0, this.blksize, offset, onread);
-    
-    function onread (err, bytes) {
-        if (err) cb(err);
-        else if (bytes === 0) {
-            cb(new Error('0 bytes read'));
-        }
-        else if (bytes === self.blksize) {
-            cb(null, buf);
-        }
-        else if (bytes < self.blksize) {
-            self._reader(buf, bytes, self.blksize - bytes, offset, onread);
-        }
-        else {
-            cb(null, buf.slice(0, bytes));
-        }
-    }
-};
-
-MDDF.prototype._writeBlock = function (n, buf, cb) {
-    this._writer(buf, 0, this.blksize, n * this.blksize, cb);
 };
 
 MDDF.prototype.nn = function (pt, cb) {
@@ -279,7 +238,7 @@ MDDF.prototype.near = function (pt) {
         if (prox === null) {
             return self._walkDown(pt, function (err, index) {
                 if (err) return cb(err);
-                prox = proximity(index, self.size / self.blksize);
+                prox = proximity(index);
                 next(cb);
             });
         }
@@ -287,7 +246,7 @@ MDDF.prototype.near = function (pt) {
             var index = prox();
             if (index === null) return cb(null, null);
             
-            return self._readBlock(index, function (err, buf_) {
+            return self.store.get(index, function (err, buf_) {
                 if (err) return cb(err);
                 buf = buf_;
                 i = 0;
@@ -318,13 +277,11 @@ MDDF.prototype.near = function (pt) {
 MDDF.prototype._walkDown = function (pt, cb) {
     var self = this;
     (function next (index, prev, depth) {
-        if (index * self.blksize >= self.size) {
-            return cb(null, prev);
-        }
         prev = index;
         
-        self._readBlock(index, function (err, buf) {
+        self.store.get(index, function (err, buf) {
             if (err) return cb(err);
+            if (buf.length === 0) return cb(null, prev);
             var ix = depth % self.dim;
             var pivot = buf.readFloatBE(4 + ix * 4);
             
@@ -341,11 +298,9 @@ MDDF.prototype._walkDown = function (pt, cb) {
 MDDF.prototype._walk = function (pt, cb) {
     var self = this;
     (function next (index, depth) {
-        if (index * self.blksize >= self.size) {
-            return cb(null, null);
-        }
-        self._readBlock(index, function (err, buf) {
+        self.store.get(index, function (err, buf) {
             if (err) return cb(err);
+            if (buf.length === 0) return cb(null, null)
             self._eachPoint(buf, cb);
             
             var ix = depth % self.dim;
@@ -371,6 +326,13 @@ MDDF.prototype._eachPoint = function (buf, cb) {
         var offset = buf.readUInt32BE(4+i*(this.dim*4+4)+j*4);
         cb(null, ppt, offset, buf);
     }
+};
+
+MDDF.prototype._createBlock = function () {
+    var buf = Buffer(this.size);
+    buf.writeUInt32BE(0, 0); // ptlen
+    buf.writeUInt32BE(0, buf.length-4); // datalen
+    return buf;
 };
 
 function mapWithData(matches){
