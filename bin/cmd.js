@@ -8,13 +8,13 @@ var minimist = require('minimist');
 var argv = minimist(process.argv.slice(2), {
     alias: {
         f: 'file',
-        b: 'blksize',
+        s: 'size',
         d: [ 'dim', 'dimension' ],
         h: 'help'
     },
     default: {
         dimension: 3,
-        blksize: 4096
+        size: 4096
     }
 });
 
@@ -22,18 +22,11 @@ var cmd = argv._[0];
 if (argv.help || cmd === 'help') return usage(0);
 if (!argv.file) return usage(1);
 
-var ex = fs.existsSync(argv.file);
-var mode = cmd === 'put'? (ex ? 'r+' : 'w+') : 'r';
-
-var fd = fs.openSync(argv.file, mode);
-var stat = fs.fstatSync(fd);
-
+var fdstore = require('fd-chunk-store')
 var df = mddf({
-    blksize: argv.blksize,
+    size: argv.size,
     dim: argv.dim,
-    size: stat.size,
-    read: fs.read.bind(null, fd),
-    write: fs.write.bind(null, fd)
+    store: fdstore(argv.size, argv.file)
 });
 
 if (cmd == 'nn') {
@@ -112,7 +105,13 @@ function error (err) {
 
 function getxyz (cmd) {
     var i = process.argv.indexOf(cmd);
-    return process.argv.slice(i+1).map(Number);
+    var xyz = process.argv.slice(i+1)
+    for (var j = 0; j < xyz.length; j++) {
+        if (/^-[A-Za-z]/.test(xyz[j])) {
+            return xyz.slice(0, j).map(Number);
+        }
+    }
+    return xyz.map(Number);
 }
 
 function eq (a, b) {
