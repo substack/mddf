@@ -1,10 +1,10 @@
 var test = require('tape');
 var mddf = require('../');
-var fs = require('fs');
 var path = require('path');
 
 var tmpdir = require('osenv').tmpdir();
 var tmpfile = path.join(tmpdir, 'mddf-' + Math.random());
+var fdstore = require('fd-chunk-store')
 
 var pointsInRange = [];
 var pointsOutOfRange = [];
@@ -19,7 +19,7 @@ test('populate', function(t){
     minPoint = [];
     maxPoint = [];
 
-    t.plan(insideSize + outsideSize + 2);
+    t.plan(insideSize + outsideSize);
 
     for(var i=0; i<3; i++){
         var random = (1 - Math.random() * 2) * 50;
@@ -29,25 +29,18 @@ test('populate', function(t){
         minPoint[i] = min;
     }
 
-        console.log('min: ' + minPoint);
+    console.log('min: ' + minPoint);
     console.log('max: ' + maxPoint);
 
-    fs.open(tmpfile, 'w+', function (err, fd) {
-        t.ifError(err);
-        df = mddf({
-            blksize: 4096,
-            dim: 3,
-            size: 0,
-            read: fs.read.bind(null, fd),
-            write: fs.write.bind(null, fd)
-        });
-        file = fd;
-        populateOutside();
+    df = mddf({
+        size: 4096,
+        dim: 3,
+        store: fdstore(4096, tmpfile)
     });
+    populateOutside();
 
 
     function populateOutside () {
-
         if (-- outsideSize < 0) {
             return populateInside();
         }
@@ -65,13 +58,7 @@ test('populate', function(t){
     }
 
     function populateInside () {
-
-        if (-- insideSize < 0) {
-
-            return fs.ftruncate(file, df.size, function (err) {
-                t.ifError(err);
-            });
-        }
+        if (-- insideSize < 0) return;
         var xyz = rpointInRange(minPoint, maxPoint);
         pointsInRange.push(xyz);
 

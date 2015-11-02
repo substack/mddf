@@ -1,10 +1,10 @@
 var test = require('tape');
 var mddf = require('../');
-var fs = require('fs');
 var path = require('path');
 
 var tmpdir = require('osenv').tmpdir();
 var tmpfile = path.join(tmpdir, 'mddf-' + Math.random());
+var fdstore = require('fd-chunk-store');
 
 var points = [];
 var data = {};
@@ -12,38 +12,27 @@ var df;
 
 test('populate for rnn', function (t) {
     var size = 50;
-    t.plan(size + 2);
+    t.plan(size);
 
-    fs.open(tmpfile, 'w+', function (err, fd) {
-        t.ifError(err);
-
-        df = mddf({
-            blksize: 4096,
-            dim: 3,
-            size: 0,
-            read: fs.read.bind(null, fd),
-            write: fs.write.bind(null, fd)
-        });
-
-        (function next () {
-            if (-- size < 0) {
-                return fs.ftruncate(fd, df.size, function (err) {
-                    t.ifError(err);
-                });
-            }
-            var xyz = rpoint();
-            points.push(xyz);
-
-            var buf = Buffer(Math.random()*100);
-            buf.fill(97 + Math.random()*26);
-            data[xyz.join(',')] = buf;
-
-            df.put(xyz, buf, function (err) {
-                t.ifError(err);
-                next();
-            });
-        })();
+    df = mddf({
+        size: 4096,
+        dim: 3,
+        store: fdstore(4096, tmpfile)
     });
+    (function next () {
+        if (-- size < 0) return;
+        var xyz = rpoint();
+        points.push(xyz);
+
+        var buf = Buffer(Math.random()*100);
+        buf.fill(97 + Math.random()*26);
+        data[xyz.join(',')] = buf;
+
+        df.put(xyz, buf, function (err) {
+            t.ifError(err);
+            next();
+        });
+    })();
 });
 
 test('radius nearest neighbors', function (t) {

@@ -1,6 +1,5 @@
 var test = require('tape');
 var mddf = require('../');
-var fs = require('fs');
 var path = require('path');
 
 var tmpdir = require('osenv').tmpdir();
