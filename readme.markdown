@@ -49,24 +49,17 @@ payload:
 
 ``` js
 var mddf = require('mddf');
-var fs = require('fs');
-
-var fd = fs.openSync('data.mddf', 'w+');
-var stat = fs.fstatSync(fd);
+var fdstore = require('fd-chunk-store');
 
 var df = mddf({
-    blksize: 4096,
+    size: 4096,
     dim: 3,
-    size: stat.size,
-    read: fs.read.bind(null, fd),
-    write: fs.write.bind(null, fd)
+    store: fdstore(4096, 'data.mddf')
 });
 
 var size = 100000;
 (function next () {
-    if (-- size < 0) {
-        return fs.ftruncate(fd, df.size, function () { fs.close(fd) });
-    }
+    if (-- size < 0) return;
     var x = (2*Math.random()-1) * 100;
     var y = (2*Math.random()-1) * 100;
     var z = (2*Math.random()-1) * 100;
@@ -87,16 +80,12 @@ Now we can query for nearest neighbors:
 
 ``` js
 var mddf = require('mddf');
-var fs = require('fs');
-
-var fd = fs.openSync('data.mddf', 'r');
-var stat = fs.fstatSync(fd);
+var fdstore = require('fd-chunk-store');
 
 var df = mddf({
-    blksize: 4096,
+    size: 4096,
     dim: 3,
-    size: stat.size,
-    read: fs.read.bind(null, fd)
+    store: fdstore(4096, 'data.mddf')
 });
 
 var start = Date.now();
@@ -117,13 +106,6 @@ data: yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy
 query took 12 ms
 ```
 
-12 ms! And with no caching of `fs.read()`!
-
-# perf boost
-
-For added performance, cache the calls to `fs.read()` and buffer `fs.write()` in
-memory before writing to disk each time.
-
 # limitations
 
 If you try to save a payload that is larger than the block size, bad things will
@@ -138,6 +120,13 @@ var mddf = require('mddf')
 ```
 
 ## var df = mddf(opts)
+
+Create an mddf instance `df` given:
+
+* `opts.size` - number of bytes to store per block
+* `opts.store` - [abstract-chunk-store](https://github.com/mafintosh/abstract-chunk-store)
+storage backend
+* `opts.dim` - number of dimensions
 
 ## df.put(pt, data, cb)
 

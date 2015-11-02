@@ -1,15 +1,10 @@
 var mddf = require('../');
-var fs = require('fs');
-
-var fd = fs.openSync('data.mddf', 'w+');
-var stat = fs.fstatSync(fd);
+var fdstore = require('fd-chunk-store');
 
 var df = mddf({
-    blksize: 4096,
+    size: 4096,
     dim: 3,
-    size: stat.size,
-    read: fs.read.bind(null, fd),
-    write: fs.write.bind(null, fd)
+    store: fdstore(4096, 'data.mddf')
 });
 
 var x = process.argv[2];
