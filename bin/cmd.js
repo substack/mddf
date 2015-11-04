@@ -22,7 +22,7 @@ var cmd = argv._[0];
 if (argv.help || cmd === 'help') return usage(0);
 if (!argv.file) return usage(1);
 
-var fdstore = require('fd-chunk-store')
+var fdstore = require('fd-chunk-store');
 var df = mddf({
     size: argv.size,
     dim: argv.dim,
@@ -84,7 +84,6 @@ else if (cmd === 'put') {
     process.stdin.pipe(concat(function (data) {
         df.put(xyz, data, function (err) {
             if (err) return error(err);
-            fs.ftruncate(fd, df.size, error);
         });
     }));
 }
