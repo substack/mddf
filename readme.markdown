@@ -50,11 +50,12 @@ payload:
 ``` js
 var mddf = require('mddf');
 var fdstore = require('fd-chunk-store');
+var sparse = require('sparse-chunk-store');
 
 var df = mddf({
     size: 4096,
     dim: 3,
-    store: fdstore(4096, 'data.mddf')
+    store: sparse(fdstore(4096, 'data.mddf'))
 });
 
 var size = 100000;
@@ -81,11 +82,12 @@ Now we can query for nearest neighbors:
 ``` js
 var mddf = require('mddf');
 var fdstore = require('fd-chunk-store');
+var sparse = require('sparse-chunk-store');
 
 var df = mddf({
     size: 4096,
     dim: 3,
-    store: fdstore(4096, 'data.mddf')
+    store: sparse(fdstore(4096, 'data.mddf'))
 });
 
 var start = Date.now();
@@ -127,6 +129,11 @@ Create an mddf instance `df` given:
 * `opts.store` - [abstract-chunk-store](https://github.com/mafintosh/abstract-chunk-store)
 storage backend
 * `opts.dim` - number of dimensions
+
+It is highly recommended that you wrap `opts.store` with
+[sparse-chunk-store](https://npmjs.com/package/sparse-chunk-store)
+when you have a store that lays out items sequentially because mddf will
+generate somewhat sparse data by default.
 
 ## df.put(pt, data, cb)
 

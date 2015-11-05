@@ -23,10 +23,11 @@ if (argv.help || cmd === 'help') return usage(0);
 if (!argv.file) return usage(1);
 
 var fdstore = require('fd-chunk-store');
+var sparse = require('sparse-chunk-store');
 var df = mddf({
     size: argv.size,
     dim: argv.dim,
-    store: fdstore(argv.size, argv.file)
+    store: sparse(fdstore(argv.size, argv.file))
 });
 
 if (cmd == 'nn') {

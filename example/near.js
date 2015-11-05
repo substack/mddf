@@ -1,10 +1,11 @@
 var mddf = require('../');
 var fdstore = require('fd-chunk-store');
+var sparse = require('sparse-chunk-store');
 
 var df = mddf({
     size: 4096,
     dim: 3,
-    store: fdstore(4096, 'data.mddf')
+    store: sparse(fdstore(4096, 'data.mddf'))
 });
 
 var near = df.near(process.argv.slice(2));
